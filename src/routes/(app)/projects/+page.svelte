@@ -153,14 +153,10 @@
 		<section class="card">
 			<h2>Nothing shipped this round</h2>
 			{#if phase === 'upcoming'}
-				<p class="muted">
-					Build week hasn't started yet. Start coding using Hackatime, and come back to ship when it
-					opens.
-				</p>
+				<p class="muted">Build week hasn't started yet.</p>
 			{:else if phase === 'break' || phase === 'scoring'}
 				<p class="muted">
-					Shipping is closed for this round. If you joined the raid, you can still break other
-					projects from <a href="/break">Break</a>.
+					Shipping is closed for this round. Ship a project next round to take part in break week.
 				</p>
 			{:else}
 				<p class="muted">No round is open right now.</p>

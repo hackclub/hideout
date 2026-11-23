@@ -132,13 +132,11 @@
 			/>
 		</div>
 
-		<p>Your README has to say what the project does and how to run it</p>
+		<p>Your README has to explain what the project does and how to run it</p>
 
 		<fieldset>
 			<legend>
-				Hackatime projects <span class="hint">
-					Pick the ones you worked on for this. Only time from this round counts.
-				</span>
+				Hackatime projects <span class="hint"> Pick the ones you worked on for this. </span>
 			</legend>
 			{#if htProjects.length}
 				<div class="grid ht">

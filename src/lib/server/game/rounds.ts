@@ -5,7 +5,7 @@ import { logAudit } from '../audit.js';
 import { notify } from '../notify.js';
 import { assignTargets } from '../../game/assign.js';
 import { counts, payout, scoreRound, type ScoreBug } from '../../game/score.js';
-import { roundById, gameState } from './season.js';
+import { roundById } from './season.js';
 import { GameError } from './ships.js';
 import type { SessionUser } from '../session.js';
 
@@ -18,32 +18,12 @@ async function liveShips(roundId: number) {
 		);
 }
 
-export async function joinRaid(user: SessionUser) {
-	const { round } = await gameState();
-	if (!round || !['upcoming', 'build'].includes(round.phase))
-		throw new GameError('You can join the raid before break week starts.');
-	await db
-		.insert(schema.raiders)
-		.values({ roundId: round.id, userId: user.id })
-		.onConflictDoNothing();
-}
-
-export async function leaveRaid(user: SessionUser) {
-	const { round } = await gameState();
-	if (!round || !['upcoming', 'build'].includes(round.phase))
-		throw new GameError('Break week already started.');
-	await db
-		.delete(schema.raiders)
-		.where(and(eq(schema.raiders.roundId, round.id), eq(schema.raiders.userId, user.id)));
-}
-
 export async function generateAssignments(roundId: number, actorId: number | null) {
 	const r = await roundById(roundId);
 	if (!r) throw new GameError('Round not found.');
 	if (r.round.assignedAt) throw new GameError('Targets were already handed out for this round.');
 
 	const ships = await liveShips(roundId);
-	const optIns = await db.select().from(schema.raiders).where(eq(schema.raiders.roundId, roundId));
 	const banned = new Set(
 		(
 			await db
@@ -56,9 +36,7 @@ export async function generateAssignments(roundId: number, actorId: number | nul
 		.select({ userId: schema.ships.userId })
 		.from(schema.ships)
 		.where(and(eq(schema.ships.roundId, roundId), ne(schema.ships.status, 'withdrawn')));
-	const raiderIds = [
-		...new Set([...shippers.map((s) => s.userId), ...optIns.map((o) => o.userId)])
-	].filter((id) => !banned.has(id));
+	const raiderIds = [...new Set(shippers.map((s) => s.userId))].filter((id) => !banned.has(id));
 
 	const earlier = await db
 		.select({ raccoonId: schema.assignments.raccoonId, ownerId: schema.ships.userId })

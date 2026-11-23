@@ -9,7 +9,7 @@
 		{
 			title: 'Build week',
 			when: 'Days 1 to 7',
-			text: 'Build any coding project and ship it properly (the shipping guide explains how). Every approved hour gets you 10 acorns, our shop currency you can trade for prizes.'
+			text: 'Build any coding project and ship it properly. Every approved hour gets you 10 acorns, our shop currency you can trade for prizes.'
 		},
 		{
 			title: 'Break week',

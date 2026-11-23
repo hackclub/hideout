@@ -29,11 +29,11 @@
 					earns 3,200 points in total, so each point is worth 5 acorns.
 				</p>
 				<p>
-					Maya logs 10 hours building and 6 hours breaking, which is 160 acorns. Two of her fixes
-					get merged, a major (15) and a minor (5). Her tier 2 project had one minor bug, and she
-					merged that fix herself (20 − 1 = 19). That's 39 points, so 195 bonus acorns.
+					Obay logs 10 hours building and 6 hours breaking, which is 160 acorns. Two of his fixes
+					get merged, a major (15) and a minor (5). His tier 2 project had one minor bug, and he
+					merged that fix himself (20 − 1 = 19). That's 39 points, so 195 bonus acorns.
 				</p>
-				<p><strong>Her round: 355 acorns, about $89 in the Shop, for 16 hours.</strong></p>
+				<p><strong>His round: 355 acorns, about $89 in the Shop, for 16 hours.</strong></p>
 			</div>
 		</section>
 	</article>

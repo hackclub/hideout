@@ -58,17 +58,4 @@ describe('assignTargets', () => {
 		const repeats = pairs.filter((p) => past.has(`${p.userId}:${owner.get(p.shipId)}`)).length;
 		expect(repeats).toBe(0);
 	});
-
-	it('includes raccoon-only raiders who have no ship', () => {
-		const { targets } = make(5, 5);
-		const raiders = [...Array.from({ length: 5 }, (_, i) => ({ userId: i + 1 })), { userId: 99 }];
-		const pairs = assignTargets({
-			raiders,
-			targets,
-			k: 3,
-			pastPairs: new Set(),
-			random: seeded(5)
-		});
-		expect(pairs.filter((p) => p.userId === 99).length).toBe(3);
-	});
 });

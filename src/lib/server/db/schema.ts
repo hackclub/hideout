@@ -209,21 +209,6 @@ export const ships = pgTable(
 	]
 );
 
-export const raiders = pgTable(
-	'raiders',
-	{
-		id: serial('id').primaryKey(),
-		roundId: integer('round_id')
-			.notNull()
-			.references(() => rounds.id),
-		userId: integer('user_id')
-			.notNull()
-			.references(() => users.id),
-		createdAt: created()
-	},
-	(t) => [uniqueIndex('raiders_round_user').on(t.roundId, t.userId)]
-);
-
 export const assignmentStatus = pgEnum('assignment_status', ['active', 'void']);
 export const hoursStatus = pgEnum('hours_status', ['none', 'pending', 'approved', 'rejected']);
 

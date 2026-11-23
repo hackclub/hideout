@@ -86,7 +86,7 @@
 								<input type="radio" name="kind" value="duplicate" /> Someone already reported it
 							</label>
 							<label class="check">
-								<input type="radio" name="kind" value="severity" /> It's real, but the severity is too
+								<input type="radio" name="kind" value="severity" /> It's okay, but the severity is too
 								high
 							</label>
 							<label class="check">

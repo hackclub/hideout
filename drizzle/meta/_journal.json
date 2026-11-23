@@ -8,6 +8,13 @@
       "when": 1795371456486,
       "tag": "0000_init",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1795440220783,
+      "tag": "0001_drop_raiders",
+      "breakpoints": true
     }
   ]
 }

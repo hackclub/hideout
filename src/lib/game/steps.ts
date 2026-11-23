@@ -36,14 +36,14 @@ export function nextSteps(s: StepInput): Step[] {
 		steps.push({
 			key: 'answer',
 			title: `Answer ${plural(s.waiting, 'fix', 'fixes')} on your project`,
-			help: 'Raccoons sent fixes to your project. Accept or dispute each one within 24 hours, or it counts as accepted.',
+			help: 'Raccoons sent fixes to your project. Accept or dispute each one within 24 hours :)',
 			action: { label: 'Answer fixes', href: '/break/defend' }
 		});
 	if (!s.hackatime)
 		steps.push({
 			key: 'hackatime',
 			title: 'Connect Hackatime',
-			help: 'Your coding hours only count once Hackatime is connected.',
+			help: 'You need Hackatime to track your hours!',
 			action: { label: 'Connect', href: '/settings' }
 		});
 	if (!s.github)
@@ -61,14 +61,14 @@ export function nextSteps(s: StepInput): Step[] {
 				steps.push({
 					key: 'ship',
 					title: 'Build something and ship it',
-					help: 'Ship your project before build week ends. Next week, raccoons try to break it.',
+					help: 'Ship your project before build week ends. Next week, raccoons will try to break it.',
 					action: { label: 'Go to your project', href: '/projects' }
 				});
 			else if (s.ship.status === 'changes')
 				steps.push({
 					key: 'changes',
 					title: 'Your project needs changes',
-					help: 'A reviewer asked for a few changes. Make them and ship again before build week ends.',
+					help: 'A reviewer asked for a few changes. Make them and ship your project.',
 					action: { label: 'See what to change', href: '/projects' }
 				});
 			else if (s.ship.status === 'pending')
@@ -80,8 +80,8 @@ export function nextSteps(s: StepInput): Step[] {
 			else
 				steps.push({
 					key: 'approved',
-					title: 'Your project is in',
-					help: 'Break week starts right after build week. Get ready to break into other projects.'
+					title: 'Your project is approved',
+					help: 'Break week starts after build week. Get ready to break into other projects.'
 				});
 			break;
 		case 'break':
@@ -90,14 +90,14 @@ export function nextSteps(s: StepInput): Step[] {
 				steps.push({
 					key: 'break',
 					title: `You have ${plural(s.targets, 'target', 'targets')}. Send a fix.`,
-					help: 'Find something broken in one of these projects and open a pull request that fixes it. Then deploy your fork and ship your fixes to get your hours.',
+					help: 'Find something broken in one of these projects and open a pull request that fixes it. Then deploy your fork and ship your fixes :)',
 					action: { label: 'Send a fix', href: '/break' }
 				});
 			else
 				steps.push({
 					key: 'no-targets',
 					title: 'No targets this round',
-					help: "You didn't ship or join the raid this round. You can jump in next round."
+					help: "You didn't ship any project this round. You can still join in the next round."
 				});
 			break;
 		case 'ready':
@@ -105,7 +105,7 @@ export function nextSteps(s: StepInput): Step[] {
 			steps.push({
 				key: 'counting',
 				title: 'Acorns are being counted',
-				help: 'The round is over. Your bonus lands once reviewers close it.'
+				help: 'The round is over. You will get your bonus once all projects are reviewed!'
 			});
 			break;
 		default:
