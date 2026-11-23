@@ -59,7 +59,8 @@ export const rules = {
 				"During Break week, you'll be assigned 3 other people's projects to break into.",
 				"A bug is anything reproducible that crashes, is a security hole, or doesn't work the way it was intended to.",
 				'Once you find a bug, open a PR on their repo that fixes it, then submit it here.',
-				"Only PRs opened during Break week are valid, and PRs that only change docs or text aren't.",
+				'To get your break hours, deploy your fork with your fixes and ship it here, one per target.',
+				"Only PRs opened during Break week are valid, and PRs that only change docs (like the README) don't count.",
 				'You can submit up to 3 fixes per target project each round.',
 				'Track your time finding and fixing bugs using Hackatime, make sure to make a new folder for each target.'
 			]

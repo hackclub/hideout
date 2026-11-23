@@ -61,7 +61,7 @@ export async function ship(user: SessionUser, input: ShipInput) {
 
 	const name = input.name.trim();
 	if (name.length < 2 || name.length > 60)
-		throw new GameError('Give your hideout a name (2-60 characters).');
+		throw new GameError('Give your project a name (2-60 characters).');
 	const repo = github.parseRepo(input.repoUrl);
 	if (!repo)
 		throw new GameError(
@@ -69,6 +69,7 @@ export async function ship(user: SessionUser, input: ShipInput) {
 		);
 	if (!input.demoUrl.trim()) throw new GameError('Add a demo link.');
 	if (!isDemoUrl(input.demoUrl)) throw new GameError('The demo link should start with https://');
+	if (!input.description.trim()) throw new GameError('Add a short description of your project.');
 	if (input.description.trim().length > 500)
 		throw new GameError('Keep the description under 500 characters.');
 	if (!input.hackatimeProjects.length) throw new GameError('Pick at least one Hackatime project.');
@@ -144,6 +145,7 @@ export async function ship(user: SessionUser, input: ShipInput) {
 				status: 'pending' as const,
 				createdAt: now()
 			};
+			
 			let saved;
 			if (existing) {
 				[saved] = await tx
@@ -249,7 +251,7 @@ export async function reviewShip(reviewer: SessionUser, shipId: number, input: R
 				{
 					kind: 'ship.approved',
 					title:
-						s.status === 'approved' ? 'Your ship review was updated' : 'Your hideout was approved',
+						s.status === 'approved' ? 'Your ship review was updated' : 'Your project was approved',
 					body: `Tier ${input.tier}, ${hours} hours approved (${hours * config.baseAcornsPerHour} acorns).`,
 					link: '/projects',
 					dedupeKey: s.status === 'approved' ? undefined : `ship.approved.${s.id}`
@@ -272,8 +274,8 @@ export async function reviewShip(reviewer: SessionUser, shipId: number, input: R
 					kind: `ship.${input.decision}`,
 					title:
 						input.decision === 'changes'
-							? 'Your hideout needs a few changes'
-							: 'Your hideout was not accepted',
+							? 'Your project needs a few changes'
+							: 'Your project got rejected :(',
 					body: input.note.trim(),
 					link: '/projects'
 				},

@@ -74,7 +74,7 @@ export async function generateAssignments(roundId: number, actorId: number | nul
 				{
 					kind: 'targets',
 					title: 'Break week! Your targets are ready',
-					body: 'Three hideouts are waiting for you in the lookout. Find a bug, fix it, send the PR.',
+					body: '3 projects are waiting for you to try and break them!',
 					link: '/break',
 					dedupeKey: `targets.${roundId}.${id}`
 				},

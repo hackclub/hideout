@@ -100,6 +100,7 @@
 				id="description"
 				name="description"
 				rows="2"
+				required
 				maxlength="500"
 				bind:value={draft.fields.description}></textarea>
 		</div>

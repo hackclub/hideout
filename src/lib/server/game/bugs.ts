@@ -59,7 +59,7 @@ export async function submitFix(
 		);
 	if (count >= config.maxPairPrsPerRound)
 		throw new GameError(
-			`You can send at most ${config.maxPairPrsPerRound} fixes to one hideout per round.`
+			`You can send at most ${config.maxPairPrsPerRound} fixes to one project per round.`
 		);
 
 	const [dupe] = await db
