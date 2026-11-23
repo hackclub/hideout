@@ -5,7 +5,7 @@ export type UnifiedInput = {
 		repoUrl: string;
 		demoUrl: string | null;
 		commitSha: string;
-		screenshotUrl: string | null;
+		screenshots: string[];
 		hackatimeProjects: string[];
 		claimedHours: number;
 		approvedHours: number | null;
@@ -30,11 +30,10 @@ export type UnifiedInput = {
 			country: string;
 		} | null;
 	};
-	project: { description: string };
+	project: { description: string; updateDescription: string | null };
 	season: { name: string };
 	round: { number: number; buildStartsAt: Date };
 	reviewer: { name: string } | null;
-	earlier: { round: number; approvedHours: number }[];
 };
 
 const day = (d: Date) => d.toISOString().slice(0, 10);
@@ -55,10 +54,10 @@ export function justification({
 	appUrl,
 	ship,
 	user,
+	project,
 	season,
 	round,
-	reviewer,
-	earlier
+	reviewer
 }: UnifiedInput) {
 	const approved = ship.approvedHours ?? 0;
 	const sections = [
@@ -87,10 +86,10 @@ export function justification({
 		`${season.name}, round ${round.number}.`,
 		`Repo at shipped commit: ${ship.repoUrl}/tree/${ship.commitSha}`,
 		`Commit history: ${ship.repoUrl}/commits/${ship.commitSha}`,
-		...(earlier.length
+		...(project.updateDescription
 			? [
-					'Shipped in earlier rounds:',
-					...earlier.map((e) => `- Round ${e.round}: ${e.approvedHours}h approved`),
+					'Update to a project started before this round or shipped before.',
+					`What's new: ${project.updateDescription}`,
 					"These hours only cover time since this round's build start, so nothing is counted twice."
 				]
 			: [])
@@ -123,9 +122,12 @@ export function unifiedFields(input: UnifiedInput): Record<string, unknown> {
 		'Code URL': ship.repoUrl,
 		'Playable URL': ship.demoUrl ?? ship.repoUrl,
 		Description: project.description,
-		Screenshot: ship.screenshotUrl ? [{ url: absoluteUrl(ship.screenshotUrl, appUrl) }] : undefined,
+		Screenshot: ship.screenshots.length
+			? ship.screenshots.map((url) => ({ url: absoluteUrl(url, appUrl) }))
+			: undefined,
 		'Optional - Override Hours Spent': ship.approvedHours ?? 0,
-		'Optional - Override Hours Spent Justification': justification(input)
+		'Optional - Override Hours Spent Justification': justification(input),
+		'Optional - Override Duplicate Justification': project.updateDescription ?? undefined
 	};
 }
 

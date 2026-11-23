@@ -1,5 +1,5 @@
 import { gameState } from '#lib/server/game/season.js';
-import { shipFor } from '#lib/server/game/ships.js';
+import { shipsIn } from '#lib/server/game/ships.js';
 import { targetCards } from '#lib/server/views.js';
 import type { PageServerLoad } from './$types';
 
@@ -10,7 +10,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 	return {
 		targets: await targetCards(user.id, round.id),
 		raidRound: { phase: round.phase, scoringEndsAt: round.scoringEndsAt },
-		shipped: Boolean(await shipFor(user.id, round.id)),
+		shipped: (await shipsIn(user.id, [round.id])).length > 0,
 		config: { responseHours: config.responseHours, maxPairPrsPerRound: config.maxPairPrsPerRound }
 	};
 };

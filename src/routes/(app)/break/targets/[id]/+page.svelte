@@ -25,8 +25,8 @@
 <article class="card sheet">
 	<header class="hero">
 		<span class="cover">
-			{#if t.ship.screenshotUrl}<img
-					src={t.ship.screenshotUrl}
+			{#if t.ship.screenshots[0]}<img
+					src={t.ship.screenshots[0]}
 					alt="Screenshot of {t.project.name}"
 				/>{/if}
 		</span>

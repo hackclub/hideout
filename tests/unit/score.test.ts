@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
 	payout,
+	payoutUsers,
 	scoreRound,
 	type ScoreBug,
 	type ScoreConfig,
@@ -104,6 +105,44 @@ describe('scoreRound', () => {
 
 	it('gives nothing to unapproved ships', () => {
 		expect(scoreRound(cfg, [ship({ approved: false })], []).get(10)).toBeUndefined();
+	});
+});
+
+describe('several ships from one builder', () => {
+	it('adds up builder points from every approved ship', () => {
+		const p = scoreRound(
+			cfg,
+			[
+				ship({ shipId: 1, tier: 2 }),
+				ship({ shipId: 2, tier: 3 }),
+				ship({ shipId: 3, tier: 3, approved: false }),
+				ship({ shipId: 4, userId: 11, tier: 1 })
+			],
+			[bug({ shipId: 1 }), bug({ shipId: 2, severity: 'major', mergedBy: 'reviewer' })]
+		);
+		expect(p.get(10)!.builder).toBe(19 + 34);
+		expect(p.get(11)!.builder).toBe(0);
+	});
+
+	it('caps the bonus on all approved hours together', () => {
+		const points = scoreRound(cfg, [ship({ shipId: 1 }), ship({ shipId: 2, tier: 3 })], []);
+		const base = new Map([
+			[10, 5 * 10 + 8 * 10],
+			[30, 1000]
+		]);
+		points.set(30, { raccoon: 1, builder: 0 });
+		const users = payoutUsers(points, base);
+		expect(users).toContainEqual({ userId: 10, points: 60, base: 130 });
+		const r = payout({ pool: 10000, capMultiplier: 3, users });
+		expect(r.rows.find((x) => x.userId === 10)!.bonus).toBe(390);
+	});
+
+	it('keeps people with only base or only points', () => {
+		const users = payoutUsers(new Map([[1, { raccoon: 5, builder: 0 }]]), new Map([[2, 40]]));
+		expect(users).toEqual([
+			{ userId: 1, points: 5, base: 0 },
+			{ userId: 2, points: 0, base: 40 }
+		]);
 	});
 });
 

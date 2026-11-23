@@ -148,7 +148,7 @@ export async function deskOutlook() {
 	for (const r of inPlay) {
 		const [ships] = await db
 			.select({
-				shipped: sql<number>`count(*) filter (where ${schema.ships.status} <> 'withdrawn')::int`,
+				shipped: sql<number>`count(*)::int`,
 				approved: sql<number>`count(*) filter (where ${schema.ships.status} = 'approved')::int`
 			})
 			.from(schema.ships)
@@ -177,7 +177,7 @@ export async function deskOutlook() {
 	return { unmergedLater, waiting, rounds: stats };
 }
 
-export const SHIP_STATUSES = ['pending', 'changes', 'approved', 'rejected', 'withdrawn'] as const;
+export const SHIP_STATUSES = ['pending', 'changes', 'approved', 'rejected'] as const;
 type ShipStatus = (typeof SHIP_STATUSES)[number];
 
 async function shippedTimes(shipIds: number[]) {
@@ -620,8 +620,9 @@ export async function updateRoundDates(
 	);
 }
 
+const LIST_KEYS = ['shipMinHours'];
 const TUPLE_KEYS = Object.entries(DEFAULT_SEASON_CONFIG)
-	.filter(([, v]) => Array.isArray(v))
+	.filter(([k, v]) => Array.isArray(v) && !LIST_KEYS.includes(k))
 	.map(([k]) => k);
 const WHOLE_KEYS = ['targetsPerRaccoon', 'responseHours', 'scoringHours', 'maxPairPrsPerRound'];
 
@@ -640,7 +641,12 @@ export function checkSeasonConfig(text: string, current: SeasonConfig): SeasonCo
 	for (const [key, value] of Object.entries(parsed)) {
 		if (!known.includes(key))
 			throw new GameError(`"${key}" is not a setting. Known ones: ${known.join(', ')}.`);
-		if (TUPLE_KEYS.includes(key)) {
+		if (LIST_KEYS.includes(key)) {
+			if (!Array.isArray(value) || value.length < 1 || value.length > 10 || !value.every(okNum))
+				throw new GameError(
+					`"${key}" needs 1 to 10 numbers, one for each ship in a round, like [5, 8, 15].`
+				);
+		} else if (TUPLE_KEYS.includes(key)) {
 			if (!Array.isArray(value) || value.length !== 3 || !value.every(okNum))
 				throw new GameError(
 					`"${key}" needs 3 numbers (minor, major, critical or tier 1, 2, 3), like [1, 2, 3].`

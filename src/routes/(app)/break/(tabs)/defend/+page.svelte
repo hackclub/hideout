@@ -13,14 +13,14 @@
 <svelte:head><title>Defend · Break · Hideout</title></svelte:head>
 
 <p class="muted intro">
-	Fixes raccoons sent to your project. Accept or dispute each one within 24 hours, or it will count
+	Fixes raccoons sent to your projects. Accept or dispute each one within 24 hours, or it will count
 	as accepted.
 </p>
 
 {#if data.fixes.length === 0}
 	<section class="card">
 		<h2>No fixes yet</h2>
-		<p class="muted">When a raccoon sends a fix to your project, it will show up here.</p>
+		<p class="muted">When a raccoon sends a fix to one of your projects, it will show up here.</p>
 	</section>
 {:else}
 	{#if waiting.length}
@@ -31,7 +31,10 @@
 					<li>
 						<a href="/break/fix/{f.bug.id}">
 							<b>{f.bug.prTitle}</b><span class="meta">
-								from {f.raccoon.name} · answer within <Countdown to={f.bug.respondBy} {offset} />
+								from {f.raccoon.name} on {f.project.name} · answer within <Countdown
+									to={f.bug.respondBy}
+									{offset}
+								/>
 							</span>
 						</a>
 						<span class="chip {sevTone[f.bug.severity]}">{f.bug.severity}</span>
@@ -48,7 +51,7 @@
 					<li>
 						<a href="/break/fix/{f.bug.id}">
 							<b>{f.bug.prTitle}</b><span class="meta">
-								from {f.raccoon.name} · {f.bug.severity}
+								from {f.raccoon.name} on {f.project.name} · {f.bug.severity}
 							</span>
 						</a>
 						<span class="chip {bugStamp[f.bug.status].tone}">{bugStamp[f.bug.status].text}</span>

@@ -1,61 +1,36 @@
-import { and, desc, eq } from 'drizzle-orm';
-import { db, schema } from '#lib/server/db/index.js';
+import { redirect } from '@sveltejs/kit';
 import { gameState } from '#lib/server/game/season.js';
-import { myProject, ship, shipFor, withdrawShip } from '#lib/server/game/ships.js';
-import * as hackatime from '#lib/server/services/hackatime.js';
-import { incomingFixes } from '#lib/server/views.js';
-import { attempt, num, str } from '#lib/server/actions.js';
+import { createProject, myProjects } from '#lib/server/game/ships.js';
+import { attempt, str } from '#lib/server/actions.js';
 import { rateLimit } from '#lib/server/ratelimit.js';
-import { now } from '#lib/server/clock.js';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals }) => {
-	const user = locals.user!;
-	const { round } = await gameState();
-	const project = await myProject(user.id);
-	const current = round ? await shipFor(user.id, round.id) : null;
-	const history = await db
-		.select({ ship: schema.ships, round: { number: schema.rounds.number } })
-		.from(schema.ships)
-		.innerJoin(schema.rounds, eq(schema.rounds.id, schema.ships.roundId))
-		.where(eq(schema.ships.userId, user.id))
-		.orderBy(desc(schema.ships.createdAt));
-	const htProjects =
-		round && hackatime.isConnected(user)
-			? (await hackatime.projects(user, round.buildStartsAt, now())).sort(
-					(a, b) => b.seconds - a.seconds
-				)
-			: [];
+	const { round, config } = await gameState();
+	const rows = await myProjects(locals.user!.id);
+	const live = rows.flatMap((r) =>
+		r.ship && r.ship.roundId === round?.id && r.ship.status !== 'rejected' ? [r.ship] : []
+	);
 	return {
-		project,
-		current,
-		history: history.filter((h) => h.ship.id !== current?.id),
-		htProjects,
-		fixes: current ? await incomingFixes(current.id) : []
+		projects: rows.map((r) => ({
+			id: r.project.id,
+			name: r.project.name,
+			description: r.project.description,
+			screenshot: r.project.screenshots[0] ?? null,
+			ship: r.ship ? { status: r.ship.status, round: r.round?.number ?? null } : null
+		})),
+		ladder: config.shipMinHours,
+		shipped: live.length
 	};
 };
 
 export const actions: Actions = {
-	ship: async ({ request, locals }) => {
+	create: async ({ request, locals }) => {
 		const f = await request.formData();
-		const file = f.get('screenshot');
 		return attempt(async () => {
-			rateLimit(locals.user!.id, 'ship');
-			return ship(locals.user!, {
-				name: str(f, 'name'),
-				description: str(f, 'description'),
-				repoUrl: str(f, 'repoUrl'),
-				demoUrl: str(f, 'demoUrl'),
-				hackatimeProjects: f.getAll('hackatime').map(String),
-				screenshot: file instanceof File && file.size > 0 ? file : null
-			});
-		}, 'Shipped! Your project is frozen at this commit. A reviewer will look at it soon.');
-	},
-	withdraw: async ({ request, locals }) => {
-		const f = await request.formData();
-		return attempt(
-			() => withdrawShip(locals.user!, num(f, 'shipId')),
-			'Ship withdrawn. You can ship again before build week ends.'
-		);
+			rateLimit(locals.user!.id, 'project');
+			const project = await createProject(locals.user!, str(f, 'name'));
+			redirect(303, `/projects/${project.id}`);
+		});
 	}
 };

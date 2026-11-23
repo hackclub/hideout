@@ -7,7 +7,7 @@ RUN npm run build && npm prune --omit=dev
 
 FROM node:22-alpine
 WORKDIR /app
-ENV NODE_ENV=production PORT=3000 BODY_SIZE_LIMIT=6M
+ENV NODE_ENV=production PORT=3000 BODY_SIZE_LIMIT=12M
 COPY --from=build /app/package.json ./
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/build ./build

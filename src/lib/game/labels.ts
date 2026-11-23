@@ -4,8 +4,7 @@ export const shipStamp: Record<string, { text: string; tone: Tone }> = {
 	pending: { text: 'Waiting for review', tone: 'info' },
 	approved: { text: 'Approved', tone: 'ok' },
 	changes: { text: 'Needs changes', tone: 'warn' },
-	rejected: { text: 'Not accepted', tone: 'bad' },
-	withdrawn: { text: 'Withdrawn', tone: 'plain' }
+	rejected: { text: 'Not accepted', tone: 'bad' }
 };
 
 export const bugStamp: Record<string, { text: string; tone: Tone }> = {

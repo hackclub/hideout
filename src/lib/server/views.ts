@@ -15,15 +15,19 @@ export async function wallet(userId: number) {
 	return { acorns: Math.floor(await balance(userId)) };
 }
 
-export async function incomingFixes(shipId: number) {
+export async function incomingFixes(shipIds: number[]) {
+	if (!shipIds.length) return [];
 	return db
 		.select({
 			bug: schema.bugs,
-			raccoon: { name: schema.users.name, githubLogin: schema.users.githubLogin }
+			raccoon: { name: schema.users.name, githubLogin: schema.users.githubLogin },
+			project: { name: schema.projects.name }
 		})
 		.from(schema.bugs)
 		.innerJoin(schema.users, eq(schema.users.id, schema.bugs.raccoonId))
-		.where(eq(schema.bugs.shipId, shipId))
+		.innerJoin(schema.ships, eq(schema.ships.id, schema.bugs.shipId))
+		.innerJoin(schema.projects, eq(schema.projects.id, schema.ships.projectId))
+		.where(inArray(schema.bugs.shipId, shipIds))
 		.orderBy(desc(schema.bugs.createdAt));
 }
 
@@ -36,7 +40,7 @@ export async function myTargets(userId: number, roundId: number) {
 				repoUrl: schema.ships.repoUrl,
 				demoUrl: schema.ships.demoUrl,
 				commitSha: schema.ships.commitSha,
-				screenshotUrl: schema.ships.screenshotUrl,
+				screenshots: schema.ships.screenshots,
 				runSteps: schema.ships.runSteps,
 				tier: schema.ships.tier
 			},
@@ -66,7 +70,7 @@ export async function targetCards(userId: number, roundId: number) {
 		name: t.project.name,
 		owner: t.owner.name,
 		description: t.project.description,
-		screenshot: t.ship.screenshotUrl,
+		screenshot: t.ship.screenshots[0] ?? null,
 		status: targetStamp(t.a.status, t.fixes)
 	}));
 }

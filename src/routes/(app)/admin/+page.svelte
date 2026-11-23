@@ -51,7 +51,11 @@
 			'unbreakableMultiplier',
 			'Unbreakable bonus: stake multiplier for a really good project that survived real attacks.'
 		],
-		['checkRates', 'Share of fixes that get a spot check [minor, major, critical], 0 to 1.']
+		['checkRates', 'Share of fixes that get a spot check [minor, major, critical], 0 to 1.'],
+		[
+			'shipMinHours',
+			'Minimum hours for each ship in a round, lowest first. Its length is the most ships a round.'
+		]
 	];
 
 	const blockers = $derived(

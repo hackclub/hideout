@@ -44,15 +44,19 @@
 	<div class="cards">
 		<section class="card">
 			<h2>Where to look</h2>
-			{#if ship.screenshotUrl}
-				<a href={ship.screenshotUrl} target="_blank" rel="noreferrer">
-					<img
-						class="shot"
-						src={ship.screenshotUrl}
-						alt="Screenshot of {data.project.name}"
-						loading="lazy"
-					/>
-				</a>
+			{#if ship.screenshots.length}
+				<div class="shots">
+					{#each ship.screenshots as src, i (i)}
+						<a href={src} target="_blank" rel="noreferrer">
+							<img
+								class="shot"
+								{src}
+								alt="Screenshot {i + 1} of {data.project.name}"
+								loading="lazy"
+							/>
+						</a>
+					{/each}
+				</div>
 			{/if}
 			<dl class="facts">
 				<dt>Shipped</dt>
@@ -94,6 +98,10 @@
 			{#if ship.runSteps}
 				<span class="mini-label">Run steps</span>
 				<pre class="steps">{ship.runSteps}</pre>
+			{/if}
+			{#if data.project.updateDescription}
+				<span class="mini-label">Update to an older project. What's new:</span>
+				<p class="quote small update">{data.project.updateDescription}</p>
 			{/if}
 		</section>
 
@@ -200,9 +208,6 @@
 		{#if own}
 			<h2>This is your ship</h2>
 			<p class="muted">Someone else on the team has to review it.</p>
-		{:else if ship.status === 'withdrawn'}
-			<h2>Nothing to review</h2>
-			<p class="muted">The maker pulled this ship back.</p>
 		{:else if ship.status === 'approved'}
 			<h2>Review</h2>
 			<dl class="facts">
@@ -343,13 +348,21 @@
 	h2 {
 		margin: 0 0 var(--s-3);
 	}
+	.shots {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+		gap: var(--s-3);
+		margin-bottom: var(--s-4);
+	}
 	.shot {
 		display: block;
 		width: 100%;
 		height: auto;
-		margin-bottom: var(--s-4);
 		border: 1px solid var(--line);
 		border-radius: var(--r-1);
+	}
+	.update {
+		white-space: pre-wrap;
 	}
 	.side {
 		position: sticky;

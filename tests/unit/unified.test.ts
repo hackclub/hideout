@@ -13,7 +13,7 @@ const input = (over: Partial<UnifiedInput> = {}): UnifiedInput => ({
 		repoUrl: 'https://github.com/mayabuilds/mossy-notes',
 		demoUrl: 'https://mayabuilds.github.io/mossy-notes',
 		commitSha: 'abc1234',
-		screenshotUrl: '/uploads/shot.png',
+		screenshots: ['/uploads/shot.png', 'https://cdn.example.com/b.webp'],
 		hackatimeProjects: ['mossy-notes', 'mossy-api'],
 		claimedHours: 12.5,
 		approvedHours: 12.5,
@@ -37,11 +37,10 @@ const input = (over: Partial<UnifiedInput> = {}): UnifiedInput => ({
 			country: 'US'
 		}
 	},
-	project: { description: 'A notes app for the woods.' },
+	project: { description: 'A notes app for the woods.', updateDescription: null },
 	season: { name: 'Season 1' },
 	round: { number: 2, buildStartsAt: new Date('2026-11-02T00:00:00Z') },
 	reviewer: { name: 'Seba' },
-	earlier: [],
 	...over
 });
 
@@ -65,13 +64,14 @@ describe('unified fields', () => {
 		});
 	});
 
-	it('makes local screenshots absolute and keeps hosted ones', () => {
+	it('sends both screenshots, making local ones absolute', () => {
 		expect(unifiedFields(input()).Screenshot).toEqual([
-			{ url: 'https://hideout.hackclub.com/uploads/shot.png' }
+			{ url: 'https://hideout.hackclub.com/uploads/shot.png' },
+			{ url: 'https://cdn.example.com/b.webp' }
 		]);
-		const hosted = input();
-		hosted.ship.screenshotUrl = 'https://cdn.example.com/a.webp';
-		expect(unifiedFields(hosted).Screenshot).toEqual([{ url: 'https://cdn.example.com/a.webp' }]);
+		const none = input();
+		none.ship = { ...none.ship, screenshots: [] };
+		expect(unifiedFields(none).Screenshot).toBeUndefined();
 	});
 
 	it('prefers HCA names and falls back to splitting the display name', () => {
@@ -102,12 +102,19 @@ describe('unified fields', () => {
 		expect(text).toContain('https://github.com/mayabuilds/mossy-notes/tree/abc1234');
 		expect(text).toContain('https://github.com/mayabuilds/mossy-notes/commits/abc1234');
 		expect(text).toContain('Season 1, round 2.');
-		expect(text).not.toContain('earlier rounds');
+		expect(text).not.toContain("What's new");
+		expect(unifiedFields(input())['Optional - Override Duplicate Justification']).toBeUndefined();
 	});
 
-	it('lists earlier rounds of the same project', () => {
-		const text = justification(input({ earlier: [{ round: 1, approvedHours: 8 }] }));
-		expect(text).toContain('Shipped in earlier rounds:\n- Round 1: 8h approved');
+	it('sends what is new for updates to older projects', () => {
+		const update = input({
+			project: { description: 'A notes app.', updateDescription: 'Added sync and dark mode.' }
+		});
+		expect(unifiedFields(update)['Optional - Override Duplicate Justification']).toBe(
+			'Added sync and dark mode.'
+		);
+		const text = justification(update);
+		expect(text).toContain("What's new: Added sync and dark mode.");
 		expect(text).toContain("only cover time since this round's build start");
 	});
 });

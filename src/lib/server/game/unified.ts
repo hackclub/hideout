@@ -1,4 +1,4 @@
-import { and, asc, eq, inArray, lt, ne } from 'drizzle-orm';
+import { and, asc, eq, inArray } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
 import { db, schema } from '../db/index.js';
 import { config } from '../config.js';
@@ -54,25 +54,7 @@ async function shipFields(shipId: number) {
 		.leftJoin(reviewer, eq(reviewer.id, schema.ships.reviewerId))
 		.where(eq(schema.ships.id, shipId));
 	if (!row) return null;
-	const { ship, round } = row;
-	const earlier = await db
-		.select({ round: schema.rounds.number, approvedHours: schema.ships.approvedHours })
-		.from(schema.ships)
-		.innerJoin(schema.rounds, eq(schema.rounds.id, schema.ships.roundId))
-		.where(
-			and(
-				eq(schema.ships.projectId, ship.projectId),
-				eq(schema.ships.status, 'approved'),
-				ne(schema.ships.id, ship.id),
-				lt(schema.rounds.buildStartsAt, round.buildStartsAt)
-			)
-		)
-		.orderBy(asc(schema.rounds.buildStartsAt));
-	return unifiedFields({
-		appUrl: config.appUrl,
-		...row,
-		earlier: earlier.map((e) => ({ round: e.round, approvedHours: e.approvedHours ?? 0 }))
-	});
+	return unifiedFields({ appUrl: config.appUrl, ...row });
 }
 
 async function fixFields(assignmentId: number) {

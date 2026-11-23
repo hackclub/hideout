@@ -1,4 +1,4 @@
-import { and, eq, isNull, lt, lte, ne, notExists, sql } from 'drizzle-orm';
+import { and, eq, isNull, lt, lte, notExists, sql } from 'drizzle-orm';
 import { db, schema } from './db/index.js';
 import { now } from './clock.js';
 import { flushSlack, notify } from './notify.js';
@@ -65,11 +65,7 @@ async function remindShippers() {
 		.from(schema.users)
 		.leftJoin(
 			schema.ships,
-			and(
-				eq(schema.ships.userId, schema.users.id),
-				eq(schema.ships.roundId, round.id),
-				ne(schema.ships.status, 'withdrawn')
-			)
+			and(eq(schema.ships.userId, schema.users.id), eq(schema.ships.roundId, round.id))
 		)
 		.where(
 			and(

@@ -71,6 +71,13 @@ export function scoreRound(cfg: ScoreConfig, ships: ScoreShip[], bugs: ScoreBug[
 	return points;
 }
 
+export function payoutUsers(points: Map<number, Points>, base: Map<number, number>) {
+	return [...new Set([...points.keys(), ...base.keys()])].map((userId) => {
+		const p = points.get(userId) ?? { raccoon: 0, builder: 0 };
+		return { userId, points: p.raccoon + p.builder, base: base.get(userId) ?? 0 };
+	});
+}
+
 export type PayoutInput = {
 	pool: number;
 	users: { userId: number; points: number; base: number }[];

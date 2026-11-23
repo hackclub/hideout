@@ -86,6 +86,7 @@ export type SeasonConfig = {
 	maxPairPrsPerRound: number;
 	unbreakableMultiplier: number;
 	checkRates: [number, number, number];
+	shipMinHours: number[];
 };
 
 export const DEFAULT_SEASON_CONFIG: SeasonConfig = {
@@ -101,7 +102,8 @@ export const DEFAULT_SEASON_CONFIG: SeasonConfig = {
 	tierStake: [0, 20, 40],
 	maxPairPrsPerRound: 3,
 	unbreakableMultiplier: 1.5,
-	checkRates: [0.1, 0.3, 1]
+	checkRates: [0.1, 0.3, 1],
+	shipMinHours: [5, 8, 15]
 };
 
 export const seasons = pgTable('seasons', {
@@ -148,20 +150,17 @@ export const projects = pgTable('projects', {
 		.references(() => users.id),
 	name: text('name').notNull(),
 	description: text('description').notNull().default(''),
-	repoUrl: text('repo_url').notNull(),
+	repoUrl: text('repo_url'),
 	demoUrl: text('demo_url'),
 	runSteps: text('run_steps'),
+	updateDescription: text('update_description'),
+	hackatimeProjects: jsonb('hackatime_projects').$type<string[]>().notNull().default([]),
+	screenshots: jsonb('screenshots').$type<string[]>().notNull().default([]),
 	createdAt: created(),
 	updatedAt: ts('updated_at').notNull().defaultNow()
 });
 
-export const shipStatus = pgEnum('ship_status', [
-	'pending',
-	'approved',
-	'changes',
-	'rejected',
-	'withdrawn'
-]);
+export const shipStatus = pgEnum('ship_status', ['pending', 'approved', 'changes', 'rejected']);
 
 export const verdict = pgEnum('unbreakable_verdict', [
 	'attacked',
@@ -187,7 +186,7 @@ export const ships = pgTable(
 		demoUrl: text('demo_url'),
 		runSteps: text('run_steps'),
 		commitSha: text('commit_sha').notNull(),
-		screenshotUrl: text('screenshot_url'),
+		screenshots: jsonb('screenshots').$type<string[]>().notNull().default([]),
 		hackatimeProjects: jsonb('hackatime_projects').$type<string[]>().notNull(),
 		claimedHours: numeric('claimed_hours', { precision: 8, scale: 2, mode: 'number' }).notNull(),
 		status: shipStatus('status').notNull().default('pending'),
@@ -203,9 +202,7 @@ export const ships = pgTable(
 	(t) => [
 		index('ships_round').on(t.roundId),
 		index('ships_user').on(t.userId),
-		uniqueIndex('ships_user_round')
-			.on(t.userId, t.roundId)
-			.where(sql`status <> 'withdrawn'`)
+		uniqueIndex('ships_project').on(t.projectId)
 	]
 );
 

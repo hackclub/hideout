@@ -113,7 +113,7 @@ export async function seedIfEmpty() {
 	await db.transaction(async (tx) => {
 		const [existing] = await tx.select({ id: schema.seasons.id }).from(schema.seasons).limit(1);
 		if (existing) return;
-		const start = new Date('2026-12-01T00:00:00Z');
+		const start = new Date('2026-11-24T00:00:00Z');
 		const [season] = await tx
 			.insert(schema.seasons)
 			.values({ name: 'Season 1', startsAt: start, config: DEFAULT_SEASON_CONFIG })

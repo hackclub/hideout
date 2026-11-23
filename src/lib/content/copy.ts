@@ -17,6 +17,10 @@ export const faq: { q: string; a: string }[] = [
 		a: "Any software: web apps, games, bots, CLIs, libraries, browser extensions, desktop apps. We don't support hardware :("
 	},
 	{
+		q: 'How many hours do I need?',
+		a: "Each project needs at least 5 hours on Hackatime from that round's build week. You can ship up to 3 a round: if you ship 2, one of them needs 8h+, and if you ship 3, one needs 8h+ and another 15h+."
+	},
+	{
 		q: 'How do I find bugs?',
 		a: "Run the project and see what breaks. You can hunt for security bugs too, but only on your own copy, never on someone's live site. When you find something broken, fix it and open a pull request with steps to reproduce and a screenshot or log that shows the bug."
 	},
@@ -34,14 +38,16 @@ export const rules = {
 			items: [
 				'A season runs for 8 weeks, split into 4 two-week rounds.',
 				'Week 1 is Build week. Week 2 is Break week.',
-				'You can keep updating the same project each round, or ship something new.'
+				'You can make a project any time, but you can only ship it during Build week.',
+				"Every round's ship is a new project. If it builds on something older, tick the update box and say what's new."
 			]
 		},
 		{
 			title: 'Shipping',
 			items: [
-				'To ship, you need a public GitHub repo, a working demo link, a screenshot, and a README that explains your project and how to run it.',
-				'Once you ship, your project is frozen at that commit for the rest of the round.'
+				'To ship, you need a public GitHub repo, a working demo link, 2 screenshots, and a README that explains your project and how to run it.',
+				"Only hours from that round's Build week count, and each Hackatime project can only count for one ship.",
+				"Once you ship, your project is frozen at that commit. You can't edit it unless a reviewer asks for changes."
 			]
 		},
 		{
@@ -102,7 +108,7 @@ export const rules = {
 			title: 'Final rules...',
 			items: [
 				"Only break into the projects you were assigned, and only by sending fixes. Don't attack anyone's servers, spam them, etc...",
-				'You can use AI to learn, but the code you ship and the fixes you send have to be yours.',
+				"We're allowing AI-made projects, as long as they're tracked with Kairos (kairos.hackclub.com).",
 				"Don't sneak anything malicious into a PR and don't try to harm anyone.",
 				'Planting bugs for friends, using alt accounts, faking hours or gaming Hackatime will get you banned.'
 			]

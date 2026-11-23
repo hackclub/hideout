@@ -5,7 +5,7 @@ const ready: StepInput = {
 	phase: 'build',
 	hackatime: true,
 	github: true,
-	ship: null,
+	ships: [],
 	targets: 0,
 	waiting: 0
 };
@@ -22,9 +22,21 @@ describe('next steps', () => {
 	});
 
 	it('follows the ship through review', () => {
-		expect(keys({ ship: { status: 'changes' } })).toEqual(['changes']);
-		expect(keys({ ship: { status: 'pending' } })).toEqual(['review']);
-		expect(keys({ ship: { status: 'approved' } })).toEqual(['approved']);
+		expect(keys({ ships: [{ status: 'changes' }] })).toEqual(['changes']);
+		expect(keys({ ships: [{ status: 'pending' }] })).toEqual(['review']);
+		expect(keys({ ships: [{ status: 'approved' }] })).toEqual(['approved']);
+	});
+
+	it('puts changes first when there are several ships', () => {
+		const ships = [{ status: 'approved' }, { status: 'pending' }, { status: 'changes' }];
+		expect(keys({ ships })).toEqual(['changes']);
+		expect(keys({ ships: ships.slice(0, 2) })).toEqual(['review']);
+		const [step] = nextSteps({ ...ready, ships: [{ status: 'pending' }, { status: 'pending' }] });
+		expect(step.title).toBe('2 of your projects are waiting for review');
+	});
+
+	it('asks for a new ship when the only one was rejected', () => {
+		expect(keys({ ships: [{ status: 'rejected' }] })).toEqual(['ship']);
 	});
 
 	it('sends raccoons to their targets in break week', () => {

@@ -11,7 +11,6 @@
 		{ key: 'changes', label: 'Sent back' },
 		{ key: 'approved', label: 'Approved' },
 		{ key: 'rejected', label: 'Not accepted' },
-		{ key: 'withdrawn', label: 'Withdrawn' },
 		{ key: 'all', label: 'All' }
 	];
 </script>

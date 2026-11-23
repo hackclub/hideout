@@ -34,13 +34,12 @@
 	</p>
 {:else if prs.length === 0}
 	<p class="muted">
-		Send a fix PR first. Once one is in, put your fixes on your own fork, deploy it and ship it here
-		to get your hours.
+		You need to submit your PR first, then deploy your fork (with fixes) and ship it here to get
+		your acorns.
 	</p>
 {:else}
 	<p class="muted">
-		Fork the project, put your fixes in, and deploy your fork so anyone can try it. Your own keys
-		and hosting.
+		Fork the project, put your fixes in, and deploy your fork so anyone can try it
 	</p>
 	<form
 		method="POST"
@@ -70,7 +69,7 @@
 		</div>
 		<div class="field">
 			<label for="demo">
-				Demo of your fixed version <span class="hint">Where anyone can try it, no building</span>
+				Demo of your fixed version <span class="hint">where people can try it :)</span>
 			</label>
 			<input
 				id="demo"

@@ -26,7 +26,7 @@ Postgres from the compose file is at `postgres://hideout:hideout@127.0.0.1:5436/
 
 ## Deploying
 
-The `Dockerfile` builds the app and runs `node build` on port 3000. It sets `BODY_SIZE_LIMIT=6M` so screenshot uploads fit. Set the variables from `.env.example`, with `APP_URL` and `ORIGIN` both set to the public URL.
+The `Dockerfile` builds the app and runs `node build` on port 3000. It sets `BODY_SIZE_LIMIT=12M` so two screenshot uploads fit. Set the variables from `.env.example`, with `APP_URL` and `ORIGIN` both set to the public URL.
 
 On boot the server runs the migrations in `drizzle/`, then adds Season 1 and the shop items if the database is empty, before it takes requests.
 

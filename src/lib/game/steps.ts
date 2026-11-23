@@ -4,7 +4,7 @@ export type StepInput = {
 	phase: Phase | null;
 	hackatime: boolean;
 	github: boolean;
-	ship: { status: string } | null;
+	ships: { status: string }[];
 	targets: number;
 	waiting: number;
 };
@@ -31,6 +31,7 @@ const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one :
 
 export function nextSteps(s: StepInput): Step[] {
 	const steps: Step[] = [];
+	const count = (status: string) => s.ships.filter((x) => x.status === status).length;
 
 	if (s.waiting > 0)
 		steps.push({
@@ -57,31 +58,40 @@ export function nextSteps(s: StepInput): Step[] {
 	switch (s.phase) {
 		case 'upcoming':
 		case 'build':
-			if (!s.ship)
-				steps.push({
-					key: 'ship',
-					title: 'Build something and ship it',
-					help: 'Ship your project before build week ends. Next week, raccoons will try to break it.',
-					action: { label: 'Go to your project', href: '/projects' }
-				});
-			else if (s.ship.status === 'changes')
+			if (count('changes'))
 				steps.push({
 					key: 'changes',
-					title: 'Your project needs changes',
-					help: 'A reviewer asked for a few changes. Make them and ship your project.',
+					title:
+						count('changes') === 1
+							? 'Your project needs changes'
+							: `${count('changes')} of your projects need changes`,
+					help: 'A reviewer asked for a few changes. Make them and ship it again.',
 					action: { label: 'See what to change', href: '/projects' }
 				});
-			else if (s.ship.status === 'pending')
+			else if (count('pending'))
 				steps.push({
 					key: 'review',
-					title: 'Your project is waiting for review',
+					title:
+						count('pending') === 1
+							? 'Your project is waiting for review'
+							: `${count('pending')} of your projects are waiting for review`,
 					help: 'A reviewer will look at it soon. Keep building in the meantime.'
+				});
+			else if (count('approved'))
+				steps.push({
+					key: 'approved',
+					title:
+						count('approved') === 1
+							? 'Your project is approved'
+							: `${count('approved')} of your projects are approved`,
+					help: 'Break week starts after build week. Get ready to break into other projects.'
 				});
 			else
 				steps.push({
-					key: 'approved',
-					title: 'Your project is approved',
-					help: 'Break week starts after build week. Get ready to break into other projects.'
+					key: 'ship',
+					title: 'Build something and ship it',
+					help: 'Make a project and ship it before build week ends. Next week, raccoons will try to break it.',
+					action: { label: 'Go to your projects', href: '/projects' }
 				});
 			break;
 		case 'break':

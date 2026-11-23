@@ -57,11 +57,11 @@ export async function shipFixes(user: SessionUser, assignmentId: number, input: 
 	const kept = typeof input.screenshot === 'string' ? input.screenshot : a.forkScreenshotUrl;
 	if (!upload && !kept) throw new GameError('Add a screenshot of the fixed version.');
 
-	const [shipRow] = await db
-		.select()
+	const ownShips = await db
+		.select({ hackatimeProjects: schema.ships.hackatimeProjects })
 		.from(schema.ships)
 		.where(and(eq(schema.ships.userId, user.id), eq(schema.ships.roundId, a.roundId)));
-	if (shipRow?.hackatimeProjects.includes(input.project))
+	if (ownShips.some((s) => s.hackatimeProjects.includes(input.project)))
 		throw new GameError(
 			"That Hackatime project is already counted for your own hideout. Use a separate one for each target's fork."
 		);

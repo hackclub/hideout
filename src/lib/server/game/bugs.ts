@@ -113,7 +113,7 @@ export async function submitFix(
 				assignment.ship.userId,
 				{
 					kind: 'bug.new',
-					title: 'A raccoon got into your hideout',
+					title: 'A raccoon got into your project',
 					body:
 						`A ${input.severity} fix PR was sent: "${bug.prTitle}". You have ${config.responseHours}h to accept or dispute it.` +
 						(risky.length
@@ -160,7 +160,7 @@ export async function respond(
 ) {
 	await db.transaction(async (tx) => {
 		const { bug, ship } = await loadBug(tx, bugId);
-		if (ship.userId !== user.id) throw new GameError('This fix is not on your hideout.');
+		if (ship.userId !== user.id) throw new GameError('This fix is not on your project.');
 		if (bug.status !== 'waiting') throw new GameError('You already answered this one.');
 		if (bug.respondBy.getTime() < now().getTime())
 			throw new GameError('The answer window closed, so it was accepted.');

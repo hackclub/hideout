@@ -4,7 +4,7 @@ import { now } from '../clock.js';
 import { logAudit } from '../audit.js';
 import { notify } from '../notify.js';
 import { assignTargets } from '../../game/assign.js';
-import { counts, payout, scoreRound, type ScoreBug } from '../../game/score.js';
+import { counts, payout, payoutUsers, scoreRound, type ScoreBug } from '../../game/score.js';
 import { roundById } from './season.js';
 import { GameError } from './ships.js';
 import type { SessionUser } from '../session.js';
@@ -35,7 +35,7 @@ export async function generateAssignments(roundId: number, actorId: number | nul
 	const shippers = await db
 		.select({ userId: schema.ships.userId })
 		.from(schema.ships)
-		.where(and(eq(schema.ships.roundId, roundId), ne(schema.ships.status, 'withdrawn')));
+		.where(eq(schema.ships.roundId, roundId));
 	const raiderIds = [...new Set(shippers.map((s) => s.userId))].filter((id) => !banned.has(id));
 
 	const earlier = await db
@@ -118,7 +118,7 @@ export async function setVerdict(
 ) {
 	const [s] = await db.select().from(schema.ships).where(eq(schema.ships.id, shipId));
 	if (!s) throw new GameError('Ship not found.');
-	if (s.userId === reviewer.id) throw new GameError("You can't judge your own hideout.");
+	if (s.userId === reviewer.id) throw new GameError("You can't judge your own project.");
 	if (s.status !== 'approved') throw new GameError('Only approved ships get a verdict.');
 	const r = await roundById(s.roundId);
 	if (!r || r.round.status === 'closed') throw new GameError('That round is already closed.');
@@ -126,7 +126,7 @@ export async function setVerdict(
 		throw new GameError('Verdicts come after break week starts.');
 	const bugs = await db.select().from(schema.bugs).where(eq(schema.bugs.shipId, shipId));
 	if (bugs.some((b) => counts(b)))
-		throw new GameError('This hideout has valid bugs, so it does not need a verdict.');
+		throw new GameError('This project has valid bugs, so it does not need a verdict.');
 	await db
 		.update(schema.ships)
 		.set({ verdict, verdictBy: reviewer.id })
@@ -175,14 +175,10 @@ export async function previewRound(roundId: number) {
 	const poolFromHours = (totalBase / r.config.baseAcornsPerHour) * r.config.poolAcornsPerHour;
 	const pool = Math.round((poolFromHours + r.round.rolloverIn) * 100) / 100;
 
-	const userIds = [...new Set([...points.keys(), ...base.keys()])];
 	const result = payout({
 		pool,
 		capMultiplier: r.config.capMultiplier,
-		users: userIds.map((id) => {
-			const p = points.get(id) ?? { raccoon: 0, builder: 0 };
-			return { userId: id, points: p.raccoon + p.builder, base: base.get(id) ?? 0 };
-		})
+		users: payoutUsers(points, base)
 	});
 
 	const blockers = {

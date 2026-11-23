@@ -1,4 +1,4 @@
-import { and, eq, inArray, ne } from 'drizzle-orm';
+import { and, desc, eq, inArray, ne } from 'drizzle-orm';
 import { db, isUniqueViolation, schema } from '../db/index.js';
 import { now } from '../clock.js';
 import { logAudit } from '../audit.js';
@@ -6,52 +6,148 @@ import { notify } from '../notify.js';
 import * as github from '../services/github.js';
 import * as hackatime from '../services/hackatime.js';
 import * as storage from '../services/storage.js';
-import { gameState } from './season.js';
+import { gameState, lockUser } from './season.js';
+import { ladderProblem, sharedHackatime } from '../../game/ladder.js';
 import type { SessionUser } from '../session.js';
 
 export class GameError extends Error {}
 
 const MAX_SCREENSHOT_MB = 5;
+export const SCREENSHOTS = 2;
 
-export type ShipInput = {
+export type ProjectInput = {
 	name: string;
 	description: string;
 	repoUrl: string;
 	demoUrl: string;
 	hackatimeProjects: string[];
-	screenshot: File | string | null;
+	isUpdate: boolean;
+	updateDescription: string;
+	screenshots: (File | null)[];
 };
+
+type Ship = typeof schema.ships.$inferSelect;
 
 export function isDemoUrl(url: string) {
 	return /^https?:\/\//.test(url.trim());
 }
 
-export async function myProject(userId: number) {
-	const [project] = await db
-		.select()
-		.from(schema.projects)
-		.where(eq(schema.projects.ownerId, userId))
-		.orderBy(schema.projects.id)
-		.limit(1);
-	return project ?? null;
+export function isLocked(ship: Pick<Ship, 'status'> | null) {
+	return Boolean(ship && ship.status !== 'changes');
 }
 
-export async function shipFor(userId: number, roundId: number) {
-	const [ship] = await db
+function projectRows() {
+	return db
+		.select({
+			project: schema.projects,
+			ship: schema.ships,
+			round: { number: schema.rounds.number }
+		})
+		.from(schema.projects)
+		.leftJoin(schema.ships, eq(schema.ships.projectId, schema.projects.id))
+		.leftJoin(schema.rounds, eq(schema.rounds.id, schema.ships.roundId));
+}
+
+export async function myProjects(userId: number) {
+	return projectRows().where(eq(schema.projects.ownerId, userId)).orderBy(desc(schema.projects.id));
+}
+
+export async function projectFor(userId: number, projectId: number) {
+	if (!Number.isInteger(projectId)) return null;
+	const [row] = await projectRows().where(
+		and(eq(schema.projects.id, projectId), eq(schema.projects.ownerId, userId))
+	);
+	return row ?? null;
+}
+
+export async function shipsIn(userId: number, roundIds: number[]) {
+	if (!roundIds.length) return [];
+	return db
 		.select()
 		.from(schema.ships)
-		.where(
-			and(
-				eq(schema.ships.userId, userId),
-				eq(schema.ships.roundId, roundId),
-				ne(schema.ships.status, 'withdrawn')
-			)
-		);
-	return ship ?? null;
+		.where(and(eq(schema.ships.userId, userId), inArray(schema.ships.roundId, roundIds)));
 }
 
-export async function ship(user: SessionUser, input: ShipInput) {
-	const { round } = await gameState();
+function checkName(raw: string) {
+	const name = raw.trim();
+	if (name.length < 2 || name.length > 60)
+		throw new GameError('Give your project a name (2-60 characters).');
+	return name;
+}
+
+export async function createProject(user: SessionUser, name: string) {
+	const [project] = await db
+		.insert(schema.projects)
+		.values({ ownerId: user.id, name: checkName(name) })
+		.returning();
+	await logAudit(user.id, 'project.created', { type: 'project', id: project.id });
+	return project;
+}
+
+export async function saveProject(user: SessionUser, projectId: number, input: ProjectInput) {
+	const name = checkName(input.name);
+	const repoUrl = input.repoUrl.trim();
+	const repo = repoUrl ? github.parseRepo(repoUrl) : null;
+	if (repoUrl && !repo)
+		throw new GameError(
+			'The repo must be a public GitHub link like https://github.com/you/project.'
+		);
+	const demoUrl = input.demoUrl.trim();
+	if (demoUrl && !isDemoUrl(demoUrl))
+		throw new GameError('The demo link should start with https://');
+	const description = input.description.trim();
+	if (description.length > 500) throw new GameError('Keep the description under 500 characters.');
+	if (input.hackatimeProjects.length > 20 || input.hackatimeProjects.some((p) => p.length > 200))
+		throw new GameError('Pick up to 20 Hackatime projects.');
+	const update = input.isUpdate ? input.updateDescription.trim() : '';
+	if (update.length > 1000) throw new GameError("Keep what's new under 1000 characters.");
+
+	const row = await projectFor(user.id, projectId);
+	if (!row) throw new GameError('Project not found.');
+	if (isLocked(row.ship)) throw new GameError("This project is shipped, so it can't be edited.");
+
+	const uploads = await Promise.all(
+		input.screenshots.slice(0, SCREENSHOTS).map((f) => (f ? screenshotBytes(f) : null))
+	);
+	const saved = await Promise.all(uploads.map((b) => (b ? storage.saveImage(b) : null)));
+
+	return db.transaction(async (tx) => {
+		await lockUser(tx, user.id);
+		const [shipped] = await tx
+			.select({ status: schema.ships.status })
+			.from(schema.ships)
+			.where(eq(schema.ships.projectId, projectId));
+		if (isLocked(shipped ?? null))
+			throw new GameError("This project is shipped, so it can't be edited.");
+		const [current] = await tx
+			.select({ screenshots: schema.projects.screenshots })
+			.from(schema.projects)
+			.where(eq(schema.projects.id, projectId));
+		const screenshots = Array.from(
+			{ length: SCREENSHOTS },
+			(_, i) => saved[i] ?? current.screenshots[i] ?? null
+		).filter((url): url is string => Boolean(url));
+		const [project] = await tx
+			.update(schema.projects)
+			.set({
+				name,
+				description,
+				repoUrl: repo ? `https://github.com/${repo.owner}/${repo.repo}` : null,
+				demoUrl: demoUrl || null,
+				hackatimeProjects: [...new Set(input.hackatimeProjects)],
+				updateDescription: update || null,
+				screenshots,
+				updatedAt: now()
+			})
+			.where(and(eq(schema.projects.id, projectId), eq(schema.projects.ownerId, user.id)))
+			.returning();
+		return project;
+	});
+}
+
+export async function shipProject(user: SessionUser, projectId: number, input: ProjectInput) {
+	const project = await saveProject(user, projectId, input);
+	const { round, config } = await gameState();
 	if (!round || round.phase !== 'build')
 		throw new GameError('You can only ship during build week.');
 	if (!user.githubLogin) throw new GameError('Link your GitHub account first (settings).');
@@ -59,93 +155,90 @@ export async function ship(user: SessionUser, input: ShipInput) {
 	if (!user.address)
 		throw new GameError('Add your address on Hack Club Auth, then refresh it in settings.');
 
-	const name = input.name.trim();
-	if (name.length < 2 || name.length > 60)
-		throw new GameError('Give your project a name (2-60 characters).');
-	const repo = github.parseRepo(input.repoUrl);
+	const repo = project.repoUrl ? github.parseRepo(project.repoUrl) : null;
 	if (!repo)
-		throw new GameError(
-			'The repo must be a public GitHub link like https://github.com/you/project.'
-		);
-	if (!input.demoUrl.trim()) throw new GameError('Add a demo link.');
-	if (!isDemoUrl(input.demoUrl)) throw new GameError('The demo link should start with https://');
-	if (!input.description.trim()) throw new GameError('Add a short description of your project.');
-	if (input.description.trim().length > 500)
-		throw new GameError('Keep the description under 500 characters.');
-	if (!input.hackatimeProjects.length) throw new GameError('Pick at least one Hackatime project.');
-	if (input.hackatimeProjects.length > 20 || input.hackatimeProjects.some((p) => p.length > 200))
-		throw new GameError('Pick up to 20 Hackatime projects.');
-
-	const prior = await shipFor(user.id, round.id);
-	if (prior && prior.status !== 'changes') throw new GameError('You already shipped this round.');
-	const upload = input.screenshot instanceof File ? await screenshotBytes(input.screenshot) : null;
-	const kept =
-		typeof input.screenshot === 'string' ? input.screenshot : (prior?.screenshotUrl ?? null);
-	if (!upload && !kept) throw new GameError('Add a screenshot of your project.');
+		throw new GameError('Add a public GitHub repo link like https://github.com/you/project.');
+	if (!project.description) throw new GameError('Add a short description of your project.');
+	if (!project.demoUrl) throw new GameError('Add a demo link.');
+	if (project.screenshots.length < SCREENSHOTS)
+		throw new GameError(`Add ${SCREENSHOTS} screenshots of your project.`);
+	if (!project.hackatimeProjects.length)
+		throw new GameError('Pick at least one Hackatime project.');
+	if (input.isUpdate && !project.updateDescription)
+		throw new GameError("You ticked the update box, so say what's new.");
 
 	const sha = await github.headSha(repo);
 	if (!sha) throw new GameError("We couldn't find that repo on GitHub. Is it public?");
 
 	const claimedHours = await hackatime.hoursFor(
 		user,
-		input.hackatimeProjects,
+		project.hackatimeProjects,
 		round.buildStartsAt,
 		now()
 	);
 	if (claimedHours <= 0)
 		throw new GameError('Those Hackatime projects have no time logged this round yet.');
-	const screenshotUrl = upload ? await storage.saveImage(upload) : kept;
 
 	try {
 		return await db.transaction(async (tx) => {
+			await lockUser(tx, user.id);
 			const [existing] = await tx
 				.select()
 				.from(schema.ships)
-				.where(
-					and(
-						eq(schema.ships.userId, user.id),
-						eq(schema.ships.roundId, round.id),
-						ne(schema.ships.status, 'withdrawn')
-					)
-				)
-				.for('update');
+				.where(eq(schema.ships.projectId, project.id));
 			if (existing && existing.status !== 'changes')
-				throw new GameError('You already shipped this round.');
-			let project = await myProject(user.id);
-			const projectValues = {
-				name,
-				description: input.description.trim(),
-				repoUrl: `https://github.com/${repo.owner}/${repo.repo}`,
-				demoUrl: input.demoUrl.trim(),
-				updatedAt: now()
-			};
-			if (project) {
-				[project] = await tx
-					.update(schema.projects)
-					.set(projectValues)
-					.where(eq(schema.projects.id, project.id))
-					.returning();
-			} else {
-				[project] = await tx
-					.insert(schema.projects)
-					.values({ ownerId: user.id, ...projectValues })
-					.returning();
+				throw new GameError('This project is already shipped.');
+			if (existing && existing.roundId !== round.id) {
+				const [worked] = await tx
+					.select({ id: schema.assignments.id })
+					.from(schema.assignments)
+					.where(eq(schema.assignments.shipId, existing.id))
+					.limit(1);
+				if (worked)
+					throw new GameError(
+						'Raccoons already worked on this ship in an earlier round. Make a new project for it and tick the update box.'
+					);
 			}
+			const others = (
+				await tx
+					.select()
+					.from(schema.ships)
+					.where(
+						and(
+							eq(schema.ships.userId, user.id),
+							eq(schema.ships.roundId, round.id),
+							ne(schema.ships.status, 'rejected')
+						)
+					)
+			).filter((s) => s.id !== existing?.id);
+			const clash = sharedHackatime(
+				others.map((s) => s.hackatimeProjects),
+				project.hackatimeProjects
+			);
+			if (clash.length)
+				throw new GameError(
+					`${clash.join(', ')} already counts for another project you shipped this round. Each Hackatime project can only count once.`
+				);
+			const problem = ladderProblem(
+				config.shipMinHours,
+				others.map((s) => s.claimedHours),
+				claimedHours
+			);
+			if (problem) throw new GameError(problem);
 
 			const shipValues = {
 				projectId: project.id,
 				userId: user.id,
 				roundId: round.id,
-				repoUrl: projectValues.repoUrl,
-				demoUrl: projectValues.demoUrl,
+				repoUrl: `https://github.com/${repo.owner}/${repo.repo}`,
+				demoUrl: project.demoUrl,
 				commitSha: sha,
-				screenshotUrl,
-				hackatimeProjects: input.hackatimeProjects,
+				screenshots: project.screenshots,
+				hackatimeProjects: project.hackatimeProjects,
 				claimedHours,
 				status: 'pending' as const,
 				createdAt: now()
 			};
-			
 			let saved;
 			if (existing) {
 				[saved] = await tx
@@ -166,7 +259,7 @@ export async function ship(user: SessionUser, input: ShipInput) {
 			return saved;
 		});
 	} catch (e) {
-		if (isUniqueViolation(e)) throw new GameError('You already shipped this round.');
+		if (isUniqueViolation(e)) throw new GameError('This project is already shipped.');
 		throw e;
 	}
 }
@@ -253,7 +346,7 @@ export async function reviewShip(reviewer: SessionUser, shipId: number, input: R
 					title:
 						s.status === 'approved' ? 'Your ship review was updated' : 'Your project was approved',
 					body: `Tier ${input.tier}, ${hours} hours approved (${hours * config.baseAcornsPerHour} acorns).`,
-					link: '/projects',
+					link: `/projects/${s.projectId}`,
 					dedupeKey: s.status === 'approved' ? undefined : `ship.approved.${s.id}`
 				},
 				tx
@@ -277,7 +370,7 @@ export async function reviewShip(reviewer: SessionUser, shipId: number, input: R
 							? 'Your project needs a few changes'
 							: 'Your project got rejected :(',
 					body: input.note.trim(),
-					link: '/projects'
+					link: `/projects/${s.projectId}`
 				},
 				tx
 			);
@@ -310,15 +403,4 @@ export async function reviewShip(reviewer: SessionUser, shipId: number, input: R
 			tx
 		);
 	});
-}
-
-export async function withdrawShip(user: SessionUser, shipId: number) {
-	const { round } = await gameState();
-	const [s] = await db.select().from(schema.ships).where(eq(schema.ships.id, shipId));
-	if (!s || s.userId !== user.id) throw new GameError('Ship not found.');
-	if (!round || round.id !== s.roundId || round.phase !== 'build')
-		throw new GameError('You can only withdraw during build week.');
-	if (s.status === 'approved') throw new GameError('Approved ships cannot be withdrawn.');
-	await db.update(schema.ships).set({ status: 'withdrawn' }).where(eq(schema.ships.id, shipId));
-	await logAudit(user.id, 'ship.withdrawn', { type: 'ship', id: shipId });
 }
