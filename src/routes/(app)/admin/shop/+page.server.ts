@@ -30,6 +30,7 @@ export const actions: Actions = {
 					stock: optional(f, 'stock'),
 					maxPerUser: optional(f, 'maxPerUser'),
 					imageUrl: str(f, 'imageUrl'),
+					logos: str(f, 'logos').split(','),
 					active: f.get('active') === 'on',
 					sort: Number(str(f, 'sort').trim() || 0)
 				}),

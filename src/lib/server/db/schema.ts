@@ -358,6 +358,7 @@ export const items = pgTable('items', {
 	category: itemCategory('category').notNull(),
 	price: integer('price').notNull(),
 	imageUrl: text('image_url'),
+	logos: text('logos').array().notNull().default([]),
 	stock: integer('stock'),
 	maxPerUser: integer('max_per_user'),
 	active: boolean('active').notNull().default(true),

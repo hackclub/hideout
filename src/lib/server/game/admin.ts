@@ -726,6 +726,7 @@ export type ItemInput = {
 	stock: number | null;
 	maxPerUser: number | null;
 	imageUrl: string;
+	logos: string[];
 	active: boolean;
 	sort: number;
 };
@@ -761,6 +762,9 @@ export async function saveItem(admin: SessionUser, id: number | null, input: Ite
 	const imageUrl = input.imageUrl.trim();
 	if (imageUrl && !/^(https:\/\/|\/)/.test(imageUrl))
 		throw new GameError('The image link should start with https:// or /.');
+	const logos = [...new Set(input.logos.map((l) => l.trim().toLowerCase()).filter(Boolean))];
+	if (logos.length > 6 || logos.some((l) => !/^[a-z0-9_]+$/.test(l)))
+		throw new GameError('Logos should be up to 6 Simple Icons names, like apple, framework.');
 	if (!Number.isInteger(input.sort)) throw new GameError('Sort must be a whole number.');
 	const values = {
 		name,
@@ -770,6 +774,7 @@ export async function saveItem(admin: SessionUser, id: number | null, input: Ite
 		stock: input.stock,
 		maxPerUser: input.maxPerUser,
 		imageUrl: imageUrl || null,
+		logos,
 		active: input.active,
 		sort: input.sort
 	};

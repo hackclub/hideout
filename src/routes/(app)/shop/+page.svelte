@@ -1,5 +1,6 @@
 <script lang="ts">
 	import Acorn from '#lib/ui/Acorn.svelte';
+	import GrantCard from '#lib/ui/GrantCard.svelte';
 	import { acorns } from '#lib/game/labels.js';
 	import type { PageProps } from './$types';
 
@@ -23,7 +24,15 @@
 		<li>
 			<a class="card item" href="/shop/{item.id}">
 				<span class="plate">
-					{#if item.imageUrl}<img src={item.imageUrl} alt="" />{/if}
+					{#if item.category === 'grant'}
+						<GrantCard
+							name={item.name}
+							price={item.price}
+							acornCents={data.acornCents}
+							image={item.imageUrl}
+							logos={item.logos}
+						/>
+					{:else if item.imageUrl}<img src={item.imageUrl} alt="" />{/if}
 				</span>
 				<div class="body">
 					<h2>{item.name}</h2>

@@ -6,7 +6,7 @@ import type { LayoutServerLoad } from './$types';
 
 export const load: LayoutServerLoad = async ({ locals, url, cookies }) => {
 	const user = requireUser(locals, url.pathname);
-	const { season, round, rounds } = await gameState();
+	const { season, config, round, rounds } = await gameState();
 	return {
 		me: {
 			id: user.id,
@@ -19,6 +19,7 @@ export const load: LayoutServerLoad = async ({ locals, url, cookies }) => {
 			hasAddress: Boolean(user.address)
 		},
 		season: season ? { name: season.name } : null,
+		acornCents: config.acornCents,
 		round: round
 			? {
 					id: round.id,

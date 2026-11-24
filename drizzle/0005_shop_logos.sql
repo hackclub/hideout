@@ -1,0 +1,1 @@
+ALTER TABLE "items" ADD COLUMN "logos" text[] DEFAULT '{}' NOT NULL;

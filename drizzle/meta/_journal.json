@@ -36,6 +36,13 @@
       "when": 1795517755526,
       "tag": "0004_kairos_projects",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1795520197954,
+      "tag": "0005_shop_logos",
+      "breakpoints": true
     }
   ]
 }

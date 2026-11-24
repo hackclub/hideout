@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import Acorn from '#lib/ui/Acorn.svelte';
+	import GrantCard from '#lib/ui/GrantCard.svelte';
 	import Flash from '#lib/ui/Flash.svelte';
 	import { acorns } from '#lib/game/labels.js';
 	import type { PageProps } from './$types';
@@ -11,6 +12,7 @@
 	const total = $derived(item.price * qty);
 	const short = $derived(total - data.wallet.acorns);
 	const physical = $derived(item.category === 'physical');
+	const grant = $derived(item.category === 'grant');
 	const needsAddress = $derived(physical && !data.me.hasAddress);
 	const facts = $derived(
 		[
@@ -29,8 +31,20 @@
 	<h1>{item.name}</h1>
 </header>
 
-<article class="card" class:split={item.imageUrl}>
-	{#if item.imageUrl}<span class="plate"><img src={item.imageUrl} alt={item.name} /></span>{/if}
+<article class="card" class:split={item.imageUrl || grant}>
+	{#if grant}
+		<span class="plate">
+			<GrantCard
+				name={item.name}
+				price={item.price}
+				acornCents={data.acornCents}
+				image={item.imageUrl}
+				logos={item.logos}
+			/>
+		</span>
+	{:else if item.imageUrl}<span class="plate">
+			<img src={item.imageUrl} alt={item.name} />
+		</span>{/if}
 	<div>
 		<p class="blurb">{item.blurb}</p>
 		<p class="price"><Acorn size={24} /> {acorns(item.price)}</p>

@@ -141,6 +141,20 @@
 						/>
 					</div>
 					<div class="field">
+						<label for="logos">
+							Logos <span class="hint">
+								Grants only. Simple Icons names, comma separated, with a file in static/logos
+							</span>
+						</label>
+						<input
+							id="logos"
+							name="logos"
+							type="text"
+							value={item?.logos.join(', ') ?? ''}
+							placeholder="apple, framework"
+						/>
+					</div>
+					<div class="field">
 						<Fields min="140px">
 							<div class="field">
 								<label for="sort">Sort <span class="hint">lower shows first</span></label>
