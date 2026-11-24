@@ -51,11 +51,21 @@ export async function projects(
 	if (since) url.searchParams.set('start_date', since.toISOString());
 	if (until) url.searchParams.set('end_date', until.toISOString());
 	const res = await fetch(url, {
-		headers: { authorization: `Bearer ${decrypt(user.hackatimeToken!)}` }
+		headers: { authorization: `Bearer ${decrypt(user.hackatimeToken!)}` },
+		signal: AbortSignal.timeout(10_000)
 	});
 	if (!res.ok) throw new Error(`Hackatime projects failed: ${res.status}`);
 	const body = (await res.json()) as { projects?: { name: string; total_seconds: number }[] };
 	return (body.projects ?? []).map((p) => ({ name: p.name, seconds: p.total_seconds }));
+}
+
+export async function projectsOrDown(user: HackatimeUser, since?: Date, until?: Date) {
+	try {
+		return { projects: await projects(user, since, until), down: false };
+	} catch (e) {
+		console.error(e);
+		return { projects: [] as HackatimeProject[], down: true };
+	}
 }
 
 export async function hoursFor(user: HackatimeUser, names: string[], since?: Date, until?: Date) {

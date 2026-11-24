@@ -6,9 +6,18 @@
 	let {
 		a,
 		prs,
-		htProjects
-	}: { a: PageData['t']['a']; prs: PageData['t']['fixes']; htProjects: PageData['htProjects'] } =
-		$props();
+		htProjects,
+		htDown,
+		kairosProjects,
+		kairos
+	}: {
+		a: PageData['t']['a'];
+		prs: PageData['t']['fixes'];
+		htProjects: PageData['htProjects'];
+		htDown: boolean;
+		kairosProjects: PageData['kairosProjects'];
+		kairos: PageData['kairos'];
+	} = $props();
 
 	let busy = $state(false);
 	const keepScreenshot = $derived(Boolean(a.forkScreenshotUrl));
@@ -120,7 +129,38 @@
 					</option>
 				{/each}
 			</select>
+			{#if htDown}
+				<span class="hint">Hackatime didn't answer. Refresh this page in a minute.</span>
+			{/if}
 		</div>
+		{#if kairos === 'none'}
+			<p class="note">
+				You need Kairos to ship. Get it at <a
+					href="https://kairos.hackclub.com"
+					target="_blank"
+					rel="noopener"
+				>
+					kairos.hackclub.com
+				</a>, then come back and pick your project.
+			</p>
+		{:else if kairos !== 'off'}
+			<div class="field">
+				<label for="kairos">Kairos project for this target</label>
+				<select id="kairos" name="kairosProject" required>
+					<option value="">Pick one</option>
+					{#each kairosProjects as p (p.name)}
+						<option value={p.name} selected={a.kairosProject === p.name}>
+							{p.name} ({(p.seconds / 3600).toFixed(1)}h)
+						</option>
+					{/each}
+				</select>
+				{#if kairos === 'down'}
+					<span class="hint">Kairos didn't answer. Refresh this page in a minute.</span>
+				{:else if !kairosProjects.length}
+					<span class="muted">No Kairos time this week yet. Is Kairos running?</span>
+				{/if}
+			</div>
+		{/if}
 		<div class="field">
 			<label for="tried">What did you work on?</label>
 			<textarea id="tried" name="note" rows="2" required>{a.note ?? ''}</textarea>

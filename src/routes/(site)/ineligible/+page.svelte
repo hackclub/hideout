@@ -15,10 +15,13 @@
 			<p>
 				Hideout is for teens 13 to 18 who've verified with Hack Club Auth. If you haven't verified
 				yet, do that at
-				<a href="https://auth.hackclub.com">auth.hackclub.com</a> and sign in again.
+				<a href="https://auth.hackclub.com">auth.hackclub.com</a> and check again.
 			</p>
 		{/if}
-		<form method="POST" action="/logout"><button class="btn ghost">Sign out</button></form>
+		<div class="row">
+			{#if !banned}<a class="btn" href="/auth/start?next=/home">Check again</a>{/if}
+			<form method="POST" action="/logout"><button class="btn ghost">Sign out</button></form>
+		</div>
 	</section>
 </div>
 

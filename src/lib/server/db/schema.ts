@@ -155,6 +155,7 @@ export const projects = pgTable('projects', {
 	runSteps: text('run_steps'),
 	updateDescription: text('update_description'),
 	hackatimeProjects: jsonb('hackatime_projects').$type<string[]>().notNull().default([]),
+	kairosProjects: jsonb('kairos_projects').$type<string[]>().notNull().default([]),
 	screenshots: jsonb('screenshots').$type<string[]>().notNull().default([]),
 	createdAt: created(),
 	updatedAt: ts('updated_at').notNull().defaultNow()
@@ -188,6 +189,7 @@ export const ships = pgTable(
 		commitSha: text('commit_sha').notNull(),
 		screenshots: jsonb('screenshots').$type<string[]>().notNull().default([]),
 		hackatimeProjects: jsonb('hackatime_projects').$type<string[]>().notNull(),
+		kairosProjects: jsonb('kairos_projects').$type<string[]>().notNull().default([]),
 		claimedHours: numeric('claimed_hours', { precision: 8, scale: 2, mode: 'number' }).notNull(),
 		status: shipStatus('status').notNull().default('pending'),
 		tier: integer('tier'),
@@ -227,6 +229,7 @@ export const assignments = pgTable(
 		forkDemoUrl: text('fork_demo_url'),
 		forkScreenshotUrl: text('fork_screenshot_url'),
 		hackatimeProject: text('hackatime_project'),
+		kairosProject: text('kairos_project'),
 		note: text('note'),
 		claimedHours: numeric('claimed_hours', { precision: 8, scale: 2, mode: 'number' }),
 		approvedHours: numeric('approved_hours', { precision: 8, scale: 2, mode: 'number' }),

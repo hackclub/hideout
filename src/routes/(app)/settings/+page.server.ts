@@ -2,6 +2,7 @@ import { eq } from 'drizzle-orm';
 import { db, schema } from '#lib/server/db/index.js';
 import { config } from '#lib/server/config.js';
 import { attempt } from '#lib/server/actions.js';
+import * as kairos from '#lib/server/services/kairos.js';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals }) => {
@@ -9,6 +10,8 @@ export const load: PageServerLoad = async ({ locals }) => {
 	return {
 		githubLogin: u.githubLogin,
 		hackatime: Boolean(u.hackatimeUserId),
+		kairosOn: kairos.enabled(),
+		kairos: await kairos.hasAccount(u),
 		slack: Boolean(u.slackId),
 		address: u.address,
 		hcaUrl: config.hca.issuer

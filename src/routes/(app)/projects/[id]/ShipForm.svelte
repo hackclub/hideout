@@ -9,16 +9,22 @@
 		};
 		isUpdate: boolean;
 		picked: string[];
+		kairosPicked: string[];
 	};
 </script>
 
 <script lang="ts">
-	import { enhance } from '$app/forms';
+	import { applyAction, enhance } from '$app/forms';
 	import Countdown from '#lib/ui/Countdown.svelte';
+	import Flash from '#lib/ui/Flash.svelte';
 
 	let {
 		draft = $bindable(),
+		form,
 		htProjects,
+		htDown,
+		kairosProjects,
+		kairos,
 		taken,
 		building,
 		screenshots,
@@ -29,7 +35,11 @@
 		details
 	}: {
 		draft: Draft;
+		form: { ok?: boolean; message?: string | null } | null | undefined;
 		htProjects: { name: string; seconds: number }[];
+		htDown: boolean;
+		kairosProjects: { name: string; seconds: number }[];
+		kairos: 'off' | 'none' | 'down' | 'ok';
 		taken: string[];
 		building: boolean;
 		screenshots: string[];
@@ -76,7 +86,17 @@
 		method="POST"
 		action="?/save"
 		enctype="multipart/form-data"
-		use:enhance={({ submitter, formElement }) => {
+		use:enhance={({ action, submitter, formElement, formData, cancel }) => {
+			if ([...formData.values()].some((v) => v instanceof File && v.size > 5 * 1024 * 1024)) {
+				cancel();
+				applyAction({
+					type: 'failure',
+					status: 400,
+					location: action.pathname,
+					data: { ok: false, message: 'That screenshot is too big. Keep it under 5MB.' }
+				});
+				return;
+			}
 			busy = submitter?.getAttribute('formaction') === '?/ship' ? 'ship' : 'save';
 			return async ({ result, update }) => {
 				await update({ reset: false });
@@ -195,6 +215,9 @@
 						: 'Pick the ones you work on for this. Only build week hours count when you ship.'}
 				</span>
 			</legend>
+			{#if htDown}
+				<p class="note">Hackatime didn't answer. Refresh this page in a minute.</p>
+			{/if}
 			{#if htProjects.length}
 				<div class="grid ht">
 					{#each htProjects as p (p.name)}
@@ -217,13 +240,54 @@
 				<p class="hint">
 					Picked: <strong>{hoursPicked.toFixed(1)}h</strong>
 				</p>
-			{:else}
+			{:else if !htDown}
 				<p class="muted">
 					No Hackatime time {building ? 'this round' : ''} yet. Is Hackatime installed in your editor?
 				</p>
 			{/if}
 		</fieldset>
 
+		{#if kairos !== 'off'}
+			<fieldset>
+				<legend>
+					Kairos projects
+					<span class="hint">Pick the ones you worked on for this.</span>
+				</legend>
+				{#if kairos === 'none'}
+					<p class="note">
+						You need Kairos to ship. Get it at <a
+							href="https://kairos.hackclub.com"
+							target="_blank"
+							rel="noopener"
+						>
+							kairos.hackclub.com
+						</a>, then come back and pick your project.
+					</p>
+				{:else if kairos === 'down'}
+					<p class="note">Kairos didn't answer. Refresh this page in a minute.</p>
+				{/if}
+				{#if kairosProjects.length}
+					<div class="grid ht">
+						{#each kairosProjects as p (p.name)}
+							<label class="check">
+								<input
+									type="checkbox"
+									name="kairos"
+									value={p.name}
+									bind:group={draft.kairosPicked}
+								/>
+								<span class="mono">{p.name}</span>
+								<span class="muted hours">{(p.seconds / 3600).toFixed(1)}h</span>
+							</label>
+						{/each}
+					</div>
+				{:else if kairos === 'ok'}
+					<p class="muted">No Kairos time this round yet. Is Kairos running?</p>
+				{/if}
+			</fieldset>
+		{/if}
+
+		<Flash {form} />
 		<div class="row">
 			<button class="btn ghost" formaction="?/save" formnovalidate disabled={busy !== null}>
 				{busy === 'save' ? 'Saving…' : 'Save'}

@@ -5,12 +5,22 @@ import { logAudit } from '../audit.js';
 import { notify } from '../notify.js';
 import * as github from '../services/github.js';
 import * as hackatime from '../services/hackatime.js';
+import * as kairos from '../services/kairos.js';
 import * as storage from '../services/storage.js';
 import { gameState, lockUser } from './season.js';
 import { ladderProblem, sharedHackatime } from '../../game/ladder.js';
 import type { SessionUser } from '../session.js';
 
 export class GameError extends Error {}
+
+export async function callService<T>(service: string, fn: () => Promise<T>) {
+	try {
+		return await fn();
+	} catch (e) {
+		console.error(e);
+		throw new GameError(`${service} didn't answer. Try again in a minute.`);
+	}
+}
 
 const MAX_SCREENSHOT_MB = 5;
 export const SCREENSHOTS = 2;
@@ -21,6 +31,7 @@ export type ProjectInput = {
 	repoUrl: string;
 	demoUrl: string;
 	hackatimeProjects: string[];
+	kairosProjects: string[];
 	isUpdate: boolean;
 	updateDescription: string;
 	screenshots: (File | null)[];
@@ -99,6 +110,8 @@ export async function saveProject(user: SessionUser, projectId: number, input: P
 	if (description.length > 500) throw new GameError('Keep the description under 500 characters.');
 	if (input.hackatimeProjects.length > 20 || input.hackatimeProjects.some((p) => p.length > 200))
 		throw new GameError('Pick up to 20 Hackatime projects.');
+	if (input.kairosProjects.length > 20 || input.kairosProjects.some((p) => p.length > 200))
+		throw new GameError('Pick up to 20 Kairos projects.');
 	const update = input.isUpdate ? input.updateDescription.trim() : '';
 	if (update.length > 1000) throw new GameError("Keep what's new under 1000 characters.");
 
@@ -135,6 +148,7 @@ export async function saveProject(user: SessionUser, projectId: number, input: P
 				repoUrl: repo ? `https://github.com/${repo.owner}/${repo.repo}` : null,
 				demoUrl: demoUrl || null,
 				hackatimeProjects: [...new Set(input.hackatimeProjects)],
+				kairosProjects: [...new Set(input.kairosProjects)],
 				updateDescription: update || null,
 				screenshots,
 				updatedAt: now()
@@ -164,17 +178,16 @@ export async function shipProject(user: SessionUser, projectId: number, input: P
 		throw new GameError(`Add ${SCREENSHOTS} screenshots of your project.`);
 	if (!project.hackatimeProjects.length)
 		throw new GameError('Pick at least one Hackatime project.');
+	if (kairos.enabled() && !project.kairosProjects.length)
+		throw new GameError('Pick at least one Kairos project.');
 	if (input.isUpdate && !project.updateDescription)
 		throw new GameError("You ticked the update box, so say what's new.");
 
-	const sha = await github.headSha(repo);
+	const sha = await callService('GitHub', () => github.headSha(repo));
 	if (!sha) throw new GameError("We couldn't find that repo on GitHub. Is it public?");
 
-	const claimedHours = await hackatime.hoursFor(
-		user,
-		project.hackatimeProjects,
-		round.buildStartsAt,
-		now()
+	const claimedHours = await callService('Hackatime', () =>
+		hackatime.hoursFor(user, project.hackatimeProjects, round.buildStartsAt, now())
 	);
 	if (claimedHours <= 0)
 		throw new GameError('Those Hackatime projects have no time logged this round yet.');
@@ -235,6 +248,7 @@ export async function shipProject(user: SessionUser, projectId: number, input: P
 				commitSha: sha,
 				screenshots: project.screenshots,
 				hackatimeProjects: project.hackatimeProjects,
+				kairosProjects: project.kairosProjects,
 				claimedHours,
 				status: 'pending' as const,
 				createdAt: now()
@@ -345,7 +359,7 @@ export async function reviewShip(reviewer: SessionUser, shipId: number, input: R
 					kind: 'ship.approved',
 					title:
 						s.status === 'approved' ? 'Your ship review was updated' : 'Your project was approved',
-					body: `Tier ${input.tier}, ${hours} hours approved (${hours * config.baseAcornsPerHour} acorns).`,
+					body: `Tier ${input.tier}, ${hours} hours approved (${amount} acorns).`,
 					link: `/projects/${s.projectId}`,
 					dedupeKey: s.status === 'approved' ? undefined : `ship.approved.${s.id}`
 				},

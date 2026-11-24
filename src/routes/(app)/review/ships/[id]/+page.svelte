@@ -3,6 +3,7 @@
 	import Stamp from '#lib/ui/Stamp.svelte';
 	import StaffFlash from '#lib/ui/staff/StaffFlash.svelte';
 	import Who from '#lib/ui/staff/Who.svelte';
+	import KairosHours from '#lib/ui/staff/KairosHours.svelte';
 	import { bugStamp, sevTone, shipStamp } from '#lib/game/labels.js';
 	import { age, hrs, repoName, shortSha, et } from '#lib/ui/staff/format.js';
 	import { tiers, verdicts } from '#lib/ui/staff/tiers.js';
@@ -123,6 +124,16 @@
 						{/if}
 					</span>
 				</dd>
+				{#if data.kairos}
+					<dt>Kairos</dt>
+					<dd>
+						<KairosHours
+							kairos={data.kairos}
+							names={ship.kairosProjects}
+							unpicked="No Kairos projects picked"
+						/>
+					</dd>
+				{/if}
 				<dt>Per day</dt>
 				<dd>
 					{data.perDay} h

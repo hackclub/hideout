@@ -15,7 +15,8 @@
 	let draft = $state<Draft>({
 		fields: { name: '', repoUrl: '', description: '', demoUrl: '', updateDescription: '' },
 		isUpdate: false,
-		picked: []
+		picked: [],
+		kairosPicked: []
 	});
 
 	let seeded = 0;
@@ -32,7 +33,8 @@
 				updateDescription: project.updateDescription ?? ''
 			},
 			isUpdate: Boolean(project.updateDescription),
-			picked: [...project.hackatimeProjects]
+			picked: [...project.hackatimeProjects],
+			kairosPicked: [...project.kairosProjects]
 		};
 	});
 
@@ -48,7 +50,7 @@
 	{#if project.description}<p>{project.description}</p>{/if}
 </header>
 
-<Flash {form} />
+{#if !editable}<Flash {form} />{/if}
 
 <div class="stack" style="--gap: var(--s-5)">
 	{#if ship}
@@ -138,7 +140,11 @@
 	{#if editable}
 		<ShipForm
 			bind:draft
+			{form}
 			htProjects={data.htProjects}
+			htDown={data.htDown}
+			kairosProjects={data.kairosProjects}
+			kairos={data.kairos}
 			taken={data.taken}
 			building={data.building}
 			screenshots={project.screenshots}

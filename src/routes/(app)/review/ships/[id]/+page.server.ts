@@ -3,6 +3,7 @@ import { requireStaff } from '#lib/server/guards.js';
 import { shipDetail } from '#lib/server/game/admin.js';
 import { GameError, reviewShip, type ReviewInput } from '#lib/server/game/ships.js';
 import { attempt, num, str } from '#lib/server/actions.js';
+import * as kairos from '#lib/server/services/kairos.js';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals, params }) => {
@@ -10,8 +11,22 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 	const id = Number(params.id);
 	const detail = Number.isInteger(id) ? await shipDetail(id) : null;
 	if (!detail) error(404, 'Ship not found');
-	const { round, ...rest } = detail;
-	return { ...rest, shipRound: round };
+	const {
+		round,
+		maker: { hcaId, ...maker },
+		...rest
+	} = detail;
+	return {
+		...rest,
+		maker,
+		shipRound: round,
+		kairos: await kairos.summaryOrDown(
+			{ id: maker.id, hcaId, slackId: maker.slackId },
+			rest.ship.kairosProjects,
+			round.buildStartsAt,
+			rest.ship.createdAt
+		)
+	};
 };
 
 const done: Record<string, string> = {

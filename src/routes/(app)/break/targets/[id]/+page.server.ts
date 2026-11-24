@@ -3,6 +3,7 @@ import { gameState } from '#lib/server/game/season.js';
 import { submitFix, withdrawFix, type Severity } from '#lib/server/game/bugs.js';
 import { shipFixes } from '#lib/server/game/hours.js';
 import * as hackatime from '#lib/server/services/hackatime.js';
+import * as kairos from '#lib/server/services/kairos.js';
 import { myTargets } from '#lib/server/views.js';
 import { attempt, num, str } from '#lib/server/actions.js';
 import { rateLimit } from '#lib/server/ratelimit.js';
@@ -15,11 +16,26 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 	if (!round) error(404, 'Not found');
 	const t = (await myTargets(user.id, round.id)).find((t) => t.a.id === Number(params.id));
 	if (!t) error(404, 'Not found');
-	const htProjects =
+	const ht =
 		hackatime.isConnected(user) && ['break', 'scoring'].includes(round.phase)
-			? await hackatime.projects(user, round.breakStartsAt, now())
-			: [];
-	return { t, phase: round.phase, htProjects, fixPoints: config.fixPoints };
+			? await hackatime.projectsOrDown(user, round.breakStartsAt, now())
+			: { projects: [], down: false };
+	const ks = ['break', 'scoring'].includes(round.phase)
+		? await kairos.projectsOrDown(user, round.breakStartsAt, now())
+		: { state: 'off' as const, projects: [] as kairos.KairosProject[] };
+	const kairosProjects = ks.projects.sort((a, b) => b.seconds - a.seconds);
+	const saved = t.a.kairosProject;
+	if (saved && ks.state !== 'off' && !kairosProjects.some((p) => p.name === saved))
+		kairosProjects.push({ name: saved, seconds: 0 });
+	return {
+		t,
+		phase: round.phase,
+		htProjects: ht.projects,
+		htDown: ht.down,
+		kairosProjects,
+		kairos: ks.state,
+		fixPoints: config.fixPoints
+	};
 };
 
 export const actions: Actions = {
@@ -48,6 +64,7 @@ export const actions: Actions = {
 				forkUrl: str(f, 'forkUrl'),
 				demoUrl: str(f, 'demoUrl'),
 				project: str(f, 'project'),
+				kairosProject: str(f, 'kairosProject'),
 				note: str(f, 'note'),
 				screenshot: file instanceof File && file.size > 0 ? file : null
 			});

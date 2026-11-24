@@ -41,6 +41,23 @@
 					<a class="btn small" href="/connect/hackatime">Connect Hackatime</a>
 				{/if}
 			</li>
+			{#if data.kairosOn}
+				<li>
+					<span>
+						<b>Kairos</b>
+						<span class="meta">Our new tracking tool. It works great with AI too.</span>
+					</span>
+					{#if data.kairos === true}
+						<Stamp text="Installed" tone="ok" />
+					{:else if data.kairos === false}
+						<a class="btn small" href="https://kairos.hackclub.com" target="_blank" rel="noopener">
+							Get Kairos
+						</a>
+					{:else}
+						<span class="muted">Kairos didn't answer. Try again in a minute.</span>
+					{/if}
+				</li>
+			{/if}
 			<li>
 				<span>
 					<b>GitHub</b>

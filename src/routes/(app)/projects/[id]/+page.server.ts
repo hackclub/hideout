@@ -9,6 +9,7 @@ import {
 	type ProjectInput
 } from '#lib/server/game/ships.js';
 import * as hackatime from '#lib/server/services/hackatime.js';
+import * as kairos from '#lib/server/services/kairos.js';
 import { incomingFixes } from '#lib/server/views.js';
 import { attempt, str } from '#lib/server/actions.js';
 import { rateLimit } from '#lib/server/ratelimit.js';
@@ -26,24 +27,37 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 				(s) => s.status !== 'rejected' && s.projectId !== row.project.id
 			)
 		: [];
-	const htProjects =
+	const ht =
 		!isLocked(row.ship) && hackatime.isConnected(user)
-			? (
-					await hackatime.projects(
-						user,
-						building ? round!.buildStartsAt : undefined,
-						building ? now() : undefined
-					)
-				).sort((a, b) => b.seconds - a.seconds)
-			: [];
+			? await hackatime.projectsOrDown(
+					user,
+					building ? round!.buildStartsAt : undefined,
+					building ? now() : undefined
+				)
+			: { projects: [], down: false };
+	const htProjects = ht.projects.sort((a, b) => b.seconds - a.seconds);
 	for (const name of row.project.hackatimeProjects)
 		if (!htProjects.some((p) => p.name === name)) htProjects.push({ name, seconds: 0 });
+	const ks = !isLocked(row.ship)
+		? await kairos.projectsOrDown(
+				user,
+				building ? round!.buildStartsAt : undefined,
+				building ? now() : undefined
+			)
+		: { state: 'off' as const, projects: [] as kairos.KairosProject[] };
+	const kairosProjects = ks.projects.sort((a, b) => b.seconds - a.seconds);
+	if (ks.state !== 'off')
+		for (const name of row.project.kairosProjects)
+			if (!kairosProjects.some((p) => p.name === name)) kairosProjects.push({ name, seconds: 0 });
 	return {
 		project: row.project,
 		ship: row.ship,
 		shipRound: row.round,
 		fixes: row.ship ? await incomingFixes([row.ship.id]) : [],
 		htProjects,
+		htDown: ht.down,
+		kairosProjects,
+		kairos: ks.state,
 		building,
 		taken: others.flatMap((s) => s.hackatimeProjects)
 	};
@@ -56,6 +70,7 @@ function projectInput(f: FormData): ProjectInput {
 		repoUrl: str(f, 'repoUrl'),
 		demoUrl: str(f, 'demoUrl'),
 		hackatimeProjects: f.getAll('hackatime').map(String),
+		kairosProjects: f.getAll('kairos').map(String),
 		isUpdate: f.get('isUpdate') === 'on',
 		updateDescription: str(f, 'updateDescription'),
 		screenshots: ['screenshot1', 'screenshot2'].map((key) => {

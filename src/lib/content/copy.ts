@@ -108,7 +108,7 @@ export const rules = {
 			title: 'Final rules...',
 			items: [
 				"Only break into the projects you were assigned, and only by sending fixes. Don't attack anyone's servers, spam them, etc...",
-				"We're allowing AI-made projects, as long as they're tracked with Kairos (kairos.hackclub.com).",
+				"We're allowing AI-made projects as long as they're tracked with Kairos (kairos.hackclub.com). Just keep in mind low-effort submissions will still get rejected.",
 				"Don't sneak anything malicious into a PR and don't try to harm anyone.",
 				'Planting bugs for friends, using alt accounts, faking hours or gaming Hackatime will get you banned.'
 			]

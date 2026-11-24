@@ -1,9 +1,20 @@
 <script lang="ts">
 	let { form }: { form: { ok?: boolean; message?: string | null } | null | undefined } = $props();
+
+	let el = $state<HTMLElement>();
+
+	$effect(() => {
+		if (form?.message) el?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+	});
 </script>
 
 {#if form?.message}
-	<div class="flash" class:bad={form.ok === false} role={form.ok === false ? 'alert' : 'status'}>
+	<div
+		bind:this={el}
+		class="flash"
+		class:bad={form.ok === false}
+		role={form.ok === false ? 'alert' : 'status'}
+	>
 		{form.message}
 	</div>
 {/if}

@@ -5,9 +5,10 @@ import { logAudit } from '../audit.js';
 import { notify } from '../notify.js';
 import * as github from '../services/github.js';
 import * as hackatime from '../services/hackatime.js';
+import * as kairos from '../services/kairos.js';
 import * as storage from '../services/storage.js';
 import { roundById } from './season.js';
-import { GameError, isDemoUrl, screenshotBytes } from './ships.js';
+import { GameError, callService, isDemoUrl, screenshotBytes } from './ships.js';
 import { LIVE_FIX } from '../../game/score.js';
 import type { SessionUser } from '../session.js';
 
@@ -15,6 +16,7 @@ export type FixShipInput = {
 	forkUrl: string;
 	demoUrl: string;
 	project: string;
+	kairosProject: string;
 	note: string;
 	screenshot: File | string | null;
 };
@@ -51,6 +53,10 @@ export async function shipFixes(user: SessionUser, assignmentId: number, input: 
 	if (!isDemoUrl(input.demoUrl)) throw new GameError('The demo link should start with https://');
 	if (!input.project) throw new GameError('Pick the Hackatime project you used for this target.');
 	if (input.project.length > 200) throw new GameError('That Hackatime project name is too long.');
+	const kairosProject = input.kairosProject.trim();
+	if (kairos.enabled() && !kairosProject)
+		throw new GameError('Pick your Kairos project for this target.');
+	if (kairosProject.length > 200) throw new GameError('That Kairos project name is too long.');
 	if (input.note.trim().length < 10)
 		throw new GameError('Write a sentence about what you worked on.');
 	const upload = input.screenshot instanceof File ? await screenshotBytes(input.screenshot) : null;
@@ -79,7 +85,7 @@ export async function shipFixes(user: SessionUser, assignmentId: number, input: 
 		throw new GameError('That Hackatime project is already used for another target.');
 
 	const upstream = github.parseRepo(ship.repoUrl);
-	const info = upstream ? await github.forkOf(fork, upstream) : null;
+	const info = upstream ? await callService('GitHub', () => github.forkOf(fork, upstream)) : null;
 	if (!info) throw new GameError("We couldn't find that fork on GitHub. Is it public?");
 	if (info.owner !== login)
 		throw new GameError(`The fork has to be on your linked GitHub account, @${user.githubLogin}.`);
@@ -88,11 +94,8 @@ export async function shipFixes(user: SessionUser, assignmentId: number, input: 
 			`That repo isn't a fork of ${ship.repoUrl.replace('https://github.com/', '')}. Fork it on GitHub and push your fixes there.`
 		);
 
-	const claimed = await hackatime.hoursFor(
-		user,
-		[input.project],
-		round.breakStartsAt,
-		round.breakEndsAt
+	const claimed = await callService('Hackatime', () =>
+		hackatime.hoursFor(user, [input.project], round.breakStartsAt, round.breakEndsAt)
 	);
 	const screenshotUrl = upload ? await storage.saveImage(upload) : kept;
 	const updated = await db
@@ -102,6 +105,7 @@ export async function shipFixes(user: SessionUser, assignmentId: number, input: 
 			forkDemoUrl: input.demoUrl.trim(),
 			forkScreenshotUrl: screenshotUrl,
 			hackatimeProject: input.project,
+			kairosProject: kairosProject || null,
 			note: input.note.trim().slice(0, 2000),
 			claimedHours: claimed,
 			hoursStatus: 'pending'

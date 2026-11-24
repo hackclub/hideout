@@ -254,6 +254,7 @@ export async function shipDetail(id: number) {
 				name: builder.name,
 				githubLogin: builder.githubLogin,
 				slackId: builder.slackId,
+				hcaId: builder.hcaId,
 				banned: builder.banned,
 				createdAt: builder.createdAt
 			},
@@ -465,7 +466,13 @@ export async function hoursQueue() {
 	const rows = await db
 		.select({
 			a: schema.assignments,
-			raccoon: { id: raccoon.id, name: raccoon.name, githubLogin: raccoon.githubLogin },
+			raccoon: {
+				id: raccoon.id,
+				name: raccoon.name,
+				githubLogin: raccoon.githubLogin,
+				hcaId: raccoon.hcaId,
+				slackId: raccoon.slackId
+			},
 			ship: {
 				id: schema.ships.id,
 				repoUrl: schema.ships.repoUrl,
@@ -474,7 +481,12 @@ export async function hoursQueue() {
 			},
 			project: { name: schema.projects.name },
 			owner: { id: builder.id, name: builder.name },
-			round: { id: schema.rounds.id, number: schema.rounds.number }
+			round: {
+				id: schema.rounds.id,
+				number: schema.rounds.number,
+				breakStartsAt: schema.rounds.breakStartsAt,
+				breakEndsAt: schema.rounds.breakEndsAt
+			}
 		})
 		.from(schema.assignments)
 		.innerJoin(raccoon, eq(raccoon.id, schema.assignments.raccoonId))

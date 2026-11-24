@@ -28,6 +28,10 @@ export const config = {
 		clientId: process.env.HACKATIME_CLIENT_ID ?? '',
 		clientSecret: process.env.HACKATIME_CLIENT_SECRET ?? ''
 	},
+	kairos: {
+		baseUrl: (process.env.KAIROS_BASE_URL || 'https://kairos.hackclub.com').replace(/\/$/, ''),
+		apiKey: process.env.KAIROS_API_KEY ?? ''
+	},
 	github: {
 		token: process.env.GITHUB_TOKEN ?? '',
 		webhookSecret: process.env.GITHUB_WEBHOOK_SECRET ?? '',

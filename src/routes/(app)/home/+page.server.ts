@@ -3,11 +3,13 @@ import { db, schema } from '#lib/server/db/index.js';
 import { gameState } from '#lib/server/game/season.js';
 import { shipsIn } from '#lib/server/game/ships.js';
 import { targetCards } from '#lib/server/views.js';
+import * as kairos from '#lib/server/services/kairos.js';
 import { nextSteps } from '#lib/game/steps.js';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	const user = locals.user!;
+	const kairosAccount = kairos.hasAccount(user);
 	const { round, raid } = await gameState();
 	const targets = raid ? await targetCards(user.id, raid.id) : [];
 
@@ -32,5 +34,5 @@ export const load: PageServerLoad = async ({ locals }) => {
 		waiting
 	});
 
-	return { steps, targets };
+	return { steps, targets, kairosBanner: (await kairosAccount) !== true };
 };

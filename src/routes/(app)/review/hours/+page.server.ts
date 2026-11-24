@@ -3,11 +3,29 @@ import { hoursQueue, refreshHours } from '#lib/server/game/admin.js';
 import { reviewBreakHours } from '#lib/server/game/hours.js';
 import { GameError } from '#lib/server/game/ships.js';
 import { attempt, num, str } from '#lib/server/actions.js';
+import * as kairos from '#lib/server/services/kairos.js';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	requireStaff(locals);
-	return { claims: await hoursQueue() };
+	const claims = await hoursQueue();
+	const hours = await Promise.all(
+		claims.map((c) =>
+			kairos.summaryOrDown(
+				c.raccoon,
+				c.a.kairosProject ? [c.a.kairosProject] : [],
+				c.round.breakStartsAt,
+				c.round.breakEndsAt
+			)
+		)
+	);
+	return {
+		claims: claims.map(({ raccoon: { hcaId, slackId, ...raccoon }, ...c }, i) => ({
+			...c,
+			raccoon,
+			kairos: hours[i]
+		}))
+	};
 };
 
 export const actions: Actions = {

@@ -93,6 +93,9 @@
 						a={t.a}
 						prs={t.fixes.filter((f) => isLiveFix(f.status))}
 						htProjects={data.htProjects}
+						htDown={data.htDown}
+						kairosProjects={data.kairosProjects}
+						kairos={data.kairos}
 					/>
 				</section>
 			{/if}

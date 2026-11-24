@@ -2,6 +2,7 @@
 	import { enhance } from '$app/forms';
 	import StaffFlash from '#lib/ui/staff/StaffFlash.svelte';
 	import Who from '#lib/ui/staff/Who.svelte';
+	import KairosHours from '#lib/ui/staff/KairosHours.svelte';
 	import { hrs } from '#lib/ui/staff/format.js';
 	import { bugStamp } from '#lib/game/labels.js';
 	import type { PageProps } from './$types';
@@ -66,6 +67,16 @@
 							<button class="btn small ghost">Recheck Hackatime</button>
 						</form>
 					</dd>
+					{#if c.kairos}
+						<dt>Kairos</dt>
+						<dd>
+							<KairosHours
+								kairos={c.kairos}
+								names={c.a.kairosProject ? [c.a.kairosProject] : []}
+								unpicked="No Kairos project picked"
+							/>
+						</dd>
+					{/if}
 					<dt>Fix PRs</dt>
 					<dd>
 						{#if c.prs.length}

@@ -38,7 +38,8 @@ async function gh(path: string) {
 			accept: 'application/vnd.github+json',
 			'user-agent': 'hideout-ysws',
 			...(config.github.token ? { authorization: `Bearer ${config.github.token}` } : {})
-		}
+		},
+		signal: AbortSignal.timeout(10_000)
 	});
 	if (res.status === 404) return null;
 	if (!res.ok) throw new Error(`GitHub ${path} failed: ${res.status}`);

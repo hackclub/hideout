@@ -1,4 +1,5 @@
 <script lang="ts">
+	import KairosBanner from './KairosBanner.svelte';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
@@ -12,6 +13,8 @@
 <header class="page-head">
 	<h1>Home</h1>
 </header>
+
+{#if data.kairosBanner}<KairosBanner />{/if}
 
 <article class="card">
 	<h2>{lead.title}</h2>
