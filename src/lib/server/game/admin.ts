@@ -17,7 +17,7 @@ import { db, schema } from '../db/index.js';
 import { logAudit } from '../audit.js';
 import { notify } from '../notify.js';
 import { DEFAULT_SEASON_CONFIG, type SeasonConfig } from '../db/schema.js';
-import { counts as bugCounts, LIVE_FIX } from '../../game/score.js';
+import { counts as bugCounts } from '../../game/score.js';
 import { balance, lockUser, seasonConfig, viewRound, type RoundView } from './season.js';
 import { GameError } from './ships.js';
 import { reviewUnmerged } from './bugs.js';
@@ -122,7 +122,10 @@ export async function deskCounts(withAdmin: boolean) {
 	const admin = withAdmin
 		? {
 				orders: await count(schema.orders, eq(schema.orders.status, 'pending')),
-				unified: await count(schema.unifiedOutbox, eq(schema.unifiedOutbox.state, 'error'))
+				unified: await count(
+					schema.unifiedOutbox,
+					inArray(schema.unifiedOutbox.state, ['waiting', 'error'])
+				)
 			}
 		: { orders: 0, unified: 0 };
 	return { ships, disputes, checks, unmerged, hours, verdicts, ...admin };
@@ -517,9 +520,7 @@ export async function hoursQueue() {
 					status: schema.bugs.status
 				})
 				.from(schema.bugs)
-				.where(
-					and(inArray(schema.bugs.assignmentId, aIds), inArray(schema.bugs.status, [...LIVE_FIX]))
-				)
+				.where(and(inArray(schema.bugs.assignmentId, aIds), ne(schema.bugs.status, 'withdrawn')))
 				.orderBy(asc(schema.bugs.createdAt))
 		: [];
 	return rows.map((r) => ({ ...r, prs: prs.filter((p) => p.assignmentId === r.a.id) }));
@@ -1105,6 +1106,24 @@ export async function retryUnified(admin: SessionUser, id: number | null) {
 	if (!done.length)
 		throw new GameError(id ? 'That one was already sent.' : 'Nothing failed, nothing to retry.');
 	await logAudit(admin.id, 'unified.retry', id ? { type: 'unified', id } : undefined, {
+		count: done.length
+	});
+	return done.length;
+}
+
+export async function queueUnified(admin: SessionUser, id: number | null) {
+	const done = await db
+		.update(schema.unifiedOutbox)
+		.set({ state: 'queued', error: null })
+		.where(
+			and(
+				eq(schema.unifiedOutbox.state, 'waiting'),
+				id ? eq(schema.unifiedOutbox.id, id) : undefined
+			)
+		)
+		.returning();
+	if (!done.length) throw new GameError('Nothing is waiting to be sent.');
+	await logAudit(admin.id, 'unified.send', id ? { type: 'unified', id } : undefined, {
 		count: done.length
 	});
 	return done.length;

@@ -66,7 +66,11 @@
 		{/if}
 	</div>
 	{#if !building}
-		<p class="note">You can ship it once build week starts. Save it for now.</p>
+		<p class="note">
+			{again
+				? "This round is over, so it can't be shipped again. Make a new project next round and tick the update box."
+				: 'You can ship it once build week starts. Save it for now.'}
+		</p>
 	{/if}
 	{#if building && !ready}
 		<p class="note">
@@ -75,7 +79,7 @@
 	{/if}
 	{#if building && !details}
 		<p class="note">
-			Hack Club needs your address. Add it on Hack Club Auth, then refresh it in <a
+			Hack Club needs your address and birthday. Add them on Hack Club Auth, then refresh them in <a
 				href="/settings"
 			>
 				settings
@@ -142,7 +146,7 @@
 				name="description"
 				rows="2"
 				required
-				maxlength="500"
+				maxlength="1000"
 				bind:value={draft.fields.description}></textarea>
 		</div>
 		<div class="field">
@@ -211,7 +215,7 @@
 				Hackatime projects
 				<span class="hint">
 					{building
-						? 'Pick the ones you worked on for this. Hours are from this build week.'
+						? "Pick the ones you worked on for this. Hours count from the start of this round's build week."
 						: 'Pick the ones you work on for this. Only build week hours count when you ship.'}
 				</span>
 			</legend>

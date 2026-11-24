@@ -59,6 +59,7 @@
 						<span class="meta">by {t.owner}</span>
 						<span class="desc">{t.description}</span>
 						<span class="chip {t.status.tone}">{t.status.text}</span>
+						{#if t.rejected}<span class="chip bad">Rejected, best to stop here</span>{/if}
 					</span>
 				</a>
 			</li>

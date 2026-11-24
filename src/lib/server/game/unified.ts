@@ -1,11 +1,10 @@
-import { and, asc, eq, inArray } from 'drizzle-orm';
+import { and, asc, eq, ne } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
 import { db, schema } from '../db/index.js';
 import { config } from '../config.js';
 import { now } from '../clock.js';
 import { sendToUnified } from '../services/unified.js';
 import { unifiedFields, unifiedFixFields } from '../../game/unified.js';
-import { LIVE_FIX } from '../../game/score.js';
 
 const reviewer = alias(schema.users, 'reviewer');
 
@@ -81,7 +80,7 @@ async function fixFields(assignmentId: number) {
 	const prs = await db
 		.select({ url: schema.bugs.prUrl, title: schema.bugs.prTitle, status: schema.bugs.status })
 		.from(schema.bugs)
-		.where(and(eq(schema.bugs.assignmentId, a.id), inArray(schema.bugs.status, [...LIVE_FIX])))
+		.where(and(eq(schema.bugs.assignmentId, a.id), ne(schema.bugs.status, 'withdrawn')))
 		.orderBy(asc(schema.bugs.createdAt));
 	return unifiedFixFields({
 		appUrl: config.appUrl,

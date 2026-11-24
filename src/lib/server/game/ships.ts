@@ -7,7 +7,7 @@ import * as github from '../services/github.js';
 import * as hackatime from '../services/hackatime.js';
 import * as kairos from '../services/kairos.js';
 import * as storage from '../services/storage.js';
-import { gameState, lockUser } from './season.js';
+import { gameState, lockUser, roundById } from './season.js';
 import { ladderProblem, sharedHackatime } from '../../game/ladder.js';
 import type { SessionUser } from '../session.js';
 
@@ -107,7 +107,7 @@ export async function saveProject(user: SessionUser, projectId: number, input: P
 	if (demoUrl && !isDemoUrl(demoUrl))
 		throw new GameError('The demo link should start with https://');
 	const description = input.description.trim();
-	if (description.length > 500) throw new GameError('Keep the description under 500 characters.');
+	if (description.length > 1000) throw new GameError('Keep the description under 1000 characters.');
 	if (input.hackatimeProjects.length > 20 || input.hackatimeProjects.some((p) => p.length > 200))
 		throw new GameError('Pick up to 20 Hackatime projects.');
 	if (input.kairosProjects.length > 20 || input.kairosProjects.some((p) => p.length > 200))
@@ -161,13 +161,27 @@ export async function saveProject(user: SessionUser, projectId: number, input: P
 
 export async function shipProject(user: SessionUser, projectId: number, input: ProjectInput) {
 	const project = await saveProject(user, projectId, input);
-	const { round, config } = await gameState();
-	if (!round || round.phase !== 'build')
+	const [prior] = await db
+		.select({ roundId: schema.ships.roundId, status: schema.ships.status })
+		.from(schema.ships)
+		.where(eq(schema.ships.projectId, project.id));
+	const again = prior?.status === 'changes';
+	const state = again ? await roundById(prior.roundId) : await gameState();
+	const round = state?.round ?? null;
+	if (again) {
+		if (!round || !['build', 'break', 'scoring'].includes(round.phase))
+			throw new GameError(
+				"That round is over, so this one can't be shipped again. Make a new project next round and tick the update box."
+			);
+	} else if (!round || round.phase !== 'build')
 		throw new GameError('You can only ship during build week.');
+	const { config } = state!;
 	if (!user.githubLogin) throw new GameError('Link your GitHub account first (settings).');
 	if (!hackatime.isConnected(user)) throw new GameError('Connect Hackatime first (settings).');
 	if (!user.address)
 		throw new GameError('Add your address on Hack Club Auth, then refresh it in settings.');
+	if (!user.birthday)
+		throw new GameError('Add your birthday on Hack Club Auth, then refresh it in settings.');
 
 	const repo = project.repoUrl ? github.parseRepo(project.repoUrl) : null;
 	if (!repo)
@@ -201,17 +215,8 @@ export async function shipProject(user: SessionUser, projectId: number, input: P
 				.where(eq(schema.ships.projectId, project.id));
 			if (existing && existing.status !== 'changes')
 				throw new GameError('This project is already shipped.');
-			if (existing && existing.roundId !== round.id) {
-				const [worked] = await tx
-					.select({ id: schema.assignments.id })
-					.from(schema.assignments)
-					.where(eq(schema.assignments.shipId, existing.id))
-					.limit(1);
-				if (worked)
-					throw new GameError(
-						'Raccoons already worked on this ship in an earlier round. Make a new project for it and tick the update box.'
-					);
-			}
+			if (existing && existing.roundId !== round.id)
+				throw new GameError('Refresh the page and try again.');
 			const others = (
 				await tx
 					.select()
@@ -348,10 +353,10 @@ export async function reviewShip(reviewer: SessionUser, shipId: number, input: R
 				});
 			await tx
 				.insert(schema.unifiedOutbox)
-				.values({ shipId: s.id })
+				.values({ shipId: s.id, state: 'waiting' })
 				.onConflictDoUpdate({
 					target: schema.unifiedOutbox.shipId,
-					set: { state: 'queued', error: null }
+					set: { state: 'waiting', error: null }
 				});
 			await notify(
 				s.userId,
@@ -388,26 +393,6 @@ export async function reviewShip(reviewer: SessionUser, shipId: number, input: R
 				},
 				tx
 			);
-			if (input.decision === 'rejected') {
-				await tx
-					.update(schema.assignments)
-					.set({ status: 'void' })
-					.where(eq(schema.assignments.shipId, s.id));
-				await tx
-					.update(schema.bugs)
-					.set({
-						status: 'invalid',
-						resolutionNote: 'The target ship was rejected.',
-						resolvedAt: now()
-					})
-					.where(
-						and(eq(schema.bugs.shipId, s.id), inArray(schema.bugs.status, ['waiting', 'disputed']))
-					);
-				await tx
-					.update(schema.bugs)
-					.set({ status: 'merged', mergedBy: 'reviewer', mergedAt: now() })
-					.where(and(eq(schema.bugs.shipId, s.id), eq(schema.bugs.status, 'accepted')));
-			}
 		}
 		await logAudit(
 			reviewer.id,

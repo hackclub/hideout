@@ -1,5 +1,5 @@
 import { requireAdmin } from '#lib/server/guards.js';
-import { retryUnified, unifiedRows } from '#lib/server/game/admin.js';
+import { queueUnified, retryUnified, unifiedRows } from '#lib/server/game/admin.js';
 import { flushUnified } from '#lib/server/game/unified.js';
 import { logAudit } from '#lib/server/audit.js';
 import { attempt, num } from '#lib/server/actions.js';
@@ -17,6 +17,14 @@ export const actions: Actions = {
 		return attempt(
 			() => retryUnified(me, num(f, 'id') || null),
 			'Queued again. It goes out on the next timer run.'
+		);
+	},
+	queue: async ({ request, locals }) => {
+		const me = requireAdmin(locals);
+		const f = await request.formData();
+		return attempt(
+			() => queueUnified(me, num(f, 'id') || null),
+			'Queued. It goes out on the next timer run.'
 		);
 	},
 	send: async ({ locals }) => {

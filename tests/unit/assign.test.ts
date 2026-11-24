@@ -6,7 +6,7 @@ function make(n: number, m: number) {
 	const targets = Array.from({ length: m }, (_, i) => ({
 		shipId: 100 + i,
 		ownerId: i + 1,
-		tier: (i % 3) + 1
+		claimedHours: 5 + ((i * 7) % m)
 	}));
 	return { raiders, targets };
 }
@@ -46,6 +46,23 @@ describe('assignTargets', () => {
 		expect(pairs.length).toBe(6);
 		const one = make(1, 1);
 		expect(assignTargets({ ...one, k: 3, pastPairs: new Set(), random: seeded(3) })).toEqual([]);
+	});
+
+	it('mixes small, medium and big projects for each raccoon', () => {
+		const { raiders, targets } = make(30, 30);
+		const pairs = assignTargets({
+			raiders,
+			targets,
+			k: 3,
+			pastPairs: new Set(),
+			random: seeded(5)
+		});
+		const sorted = [...targets].sort((a, b) => a.claimedHours - b.claimedHours);
+		const band = new Map(sorted.map((t, i) => [t.shipId, Math.floor(i / 10)]));
+		const perUser = new Map<number, Set<number>>();
+		for (const p of pairs)
+			perUser.set(p.userId, (perUser.get(p.userId) ?? new Set()).add(band.get(p.shipId)!));
+		for (const bands of perUser.values()) expect(bands.size).toBe(3);
 	});
 
 	it('avoids pairs from earlier rounds when it can', () => {

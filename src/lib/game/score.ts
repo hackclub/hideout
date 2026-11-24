@@ -31,9 +31,6 @@ export function counts(bug: Pick<ScoreBug, 'status' | 'checkResult'>) {
 	return (bug.status === 'accepted' || bug.status === 'merged') && bug.checkResult !== 'rejected';
 }
 
-export const LIVE_FIX = ['waiting', 'accepted', 'disputed', 'merged'] as const;
-export const isLiveFix = (status: string) => (LIVE_FIX as readonly string[]).includes(status);
-
 export type Points = { raccoon: number; builder: number };
 
 export function scoreRound(cfg: ScoreConfig, ships: ScoreShip[], bugs: ScoreBug[]) {

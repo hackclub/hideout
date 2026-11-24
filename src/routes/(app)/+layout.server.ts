@@ -16,7 +16,8 @@ export const load: LayoutServerLoad = async ({ locals, url, cookies }) => {
 			role: user.role,
 			githubLogin: user.githubLogin,
 			hackatime: Boolean(user.hackatimeUserId),
-			hasAddress: Boolean(user.address)
+			hasAddress: Boolean(user.address),
+			hasBirthday: Boolean(user.birthday)
 		},
 		season: season ? { name: season.name } : null,
 		acornCents: config.acornCents,

@@ -1,5 +1,5 @@
 import { error } from '@sveltejs/kit';
-import { gameState } from '#lib/server/game/season.js';
+import { gameState, roundById } from '#lib/server/game/season.js';
 import {
 	isLocked,
 	projectFor,
@@ -20,8 +20,13 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 	const user = locals.user!;
 	const row = await projectFor(user.id, Number(params.id));
 	if (!row) error(404, 'Project not found');
-	const { round } = await gameState();
-	const building = round?.phase === 'build';
+	const again = row.ship?.status === 'changes';
+	const round = again
+		? ((await roundById(row.ship!.roundId))?.round ?? null)
+		: (await gameState()).round;
+	const building = again
+		? Boolean(round && ['build', 'break', 'scoring'].includes(round.phase))
+		: round?.phase === 'build';
 	const others = round
 		? (await shipsIn(user.id, [round.id])).filter(
 				(s) => s.status !== 'rejected' && s.projectId !== row.project.id
@@ -59,6 +64,7 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 		kairosProjects,
 		kairos: ks.state,
 		building,
+		closesAt: building ? (again ? round!.scoringEndsAt : round!.breakStartsAt) : undefined,
 		taken: others.flatMap((s) => s.hackatimeProjects)
 	};
 };

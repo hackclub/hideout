@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { eligibility, hcaAddress } from '../../src/lib/server/services/hca.js';
+import { eligibility, hcaAddress, hcaBirthday } from '../../src/lib/server/services/hca.js';
 import { parsePr, parseRepo } from '../../src/lib/server/services/github.js';
 import { slackMessage } from '../../src/lib/server/notify.js';
 import { REQUIRED_ENV, startupProblems } from '../../src/lib/server/startup.js';
@@ -31,6 +31,18 @@ describe('hca address', () => {
 	it('returns null when there is no usable address', () => {
 		expect(hcaAddress(undefined, 'x')).toBeNull();
 		expect(hcaAddress({ street_address: '1 Road', country: 'CA' }, 'x')).toBeNull();
+	});
+});
+
+describe('hca birthday', () => {
+	it('keeps a plain YYYY-MM-DD date and drops anything else', () => {
+		expect(hcaBirthday('2009-04-17')).toBe('2009-04-17');
+		expect(hcaBirthday(' 2009-04-17 ')).toBe('2009-04-17');
+		expect(hcaBirthday('2009-02-30')).toBeNull();
+		expect(hcaBirthday('17/04/2009')).toBeNull();
+		expect(hcaBirthday('2009-04-17T00:00:00Z')).toBeNull();
+		expect(hcaBirthday(1239926400)).toBeNull();
+		expect(hcaBirthday(undefined)).toBeNull();
 	});
 });
 

@@ -11,8 +11,9 @@
 
 	let { data, form }: PageProps = $props();
 
-	const tone = { queued: 'info', sent: 'ok', error: 'bad' } as const;
+	const tone = { waiting: 'warn', queued: 'info', sent: 'ok', error: 'bad' } as const;
 	const tally = $derived({
+		waiting: data.rows.filter((r) => r.o.state === 'waiting').length,
 		queued: data.rows.filter((r) => r.o.state === 'queued').length,
 		sent: data.rows.filter((r) => r.o.state === 'sent').length,
 		error: data.rows.filter((r) => r.o.state === 'error').length
@@ -21,10 +22,15 @@
 
 <StaffFlash {form} />
 
-<PageHead title="Unified">
-	Every approved ship, and every approved set of break-week fixes, goes to Hack Club's Unified YSWS
-	database. The timer sends queued ones every minute and failures stay here.
+<PageHead title="Airtable">
+	Every approved ship, and every approved set of break-week fixes, lands here waiting. Nothing goes
+	to Airtable until you send it. The timer sends queued ones every minute and failures stay here.
 	{#snippet actions()}
+		{#if tally.waiting}
+			<form method="POST" action="?/queue" use:enhance>
+				<button class="btn small">Send all {tally.waiting} waiting</button>
+			</form>
+		{/if}
 		{#if tally.error}
 			<form method="POST" action="?/retry" use:enhance>
 				<button class="btn small">Retry all {tally.error} failed</button>
@@ -44,6 +50,7 @@
 	<Panel>
 		<Stats
 			items={[
+				{ label: 'Waiting', value: tally.waiting },
 				{ label: 'Queued', value: tally.queued },
 				{ label: 'Sent', value: tally.sent },
 				{ label: 'Failed', value: tally.error, tone: tally.error ? 'bad' : undefined }
@@ -74,7 +81,12 @@
 						<td class="err">{r.o.error ?? ''}</td>
 						<td class="nowrap">{r.o.sentAt ? et(r.o.sentAt).replace(' ET', '') : '-'}</td>
 						<td>
-							{#if r.o.state === 'error'}
+							{#if r.o.state === 'waiting'}
+								<form method="POST" action="?/queue" use:enhance>
+									<input type="hidden" name="id" value={r.o.id} />
+									<button class="btn small">Send</button>
+								</form>
+							{:else if r.o.state === 'error'}
 								<form method="POST" action="?/retry" use:enhance>
 									<input type="hidden" name="id" value={r.o.id} />
 									<button class="btn small ghost">Retry</button>

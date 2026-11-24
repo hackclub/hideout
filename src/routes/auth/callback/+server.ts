@@ -23,6 +23,7 @@ export const GET: RequestHandler = async ({ cookies, url }) => {
 		lastName: profile.lastName,
 		slackId: profile.slackId,
 		address: profile.address,
+		birthday: profile.birthday,
 		verification: profile.verification
 	});
 	await createSession(cookies, user.id);

@@ -14,6 +14,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 		kairos: await kairos.hasAccount(u),
 		slack: Boolean(u.slackId),
 		address: u.address,
+		birthday: u.birthday,
 		hcaUrl: config.hca.issuer
 	};
 };

@@ -1,7 +1,7 @@
 import { config } from '../config.js';
 import type { Address } from '../db/schema.js';
 
-export const HCA_SCOPES = 'openid profile email slack_id verification_status address';
+export const HCA_SCOPES = 'openid profile email slack_id verification_status address birthdate';
 
 export type HcaProfile = {
 	sub: string;
@@ -11,6 +11,7 @@ export type HcaProfile = {
 	lastName: string | null;
 	slackId: string | null;
 	address: Address | null;
+	birthday: string | null;
 	verification: string;
 	eligible: boolean;
 };
@@ -55,6 +56,7 @@ export async function exchangeCode(code: string, redirectUri: string): Promise<H
 		lastName: info.family_name ? String(info.family_name) : null,
 		slackId: info.slack_id ? String(info.slack_id) : null,
 		address: hcaAddress(info.address, name),
+		birthday: hcaBirthday(info.birthdate),
 		...eligibility(info)
 	};
 }
@@ -86,6 +88,14 @@ export function hcaAddress(raw: unknown, name: string): Address | null {
 		country
 	};
 	return address.line1 && address.city && address.postcode && address.country ? address : null;
+}
+
+export function hcaBirthday(raw: unknown): string | null {
+	if (typeof raw !== 'string') return null;
+	const day = raw.trim();
+	if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) return null;
+	const d = new Date(`${day}T00:00:00Z`);
+	return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === day ? day : null;
 }
 
 export function eligibility(info: Record<string, unknown>) {

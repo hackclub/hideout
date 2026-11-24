@@ -2,7 +2,6 @@
 	import { enhance } from '$app/forms';
 	import Flash from '#lib/ui/Flash.svelte';
 	import { bugStamp, sevTone } from '#lib/game/labels.js';
-	import { isLiveFix } from '#lib/game/score.js';
 	import FixForm from './FixForm.svelte';
 	import ShipFixes from './ShipFixes.svelte';
 	import type { PageProps } from './$types';
@@ -37,6 +36,12 @@
 				{#if t.a.status === 'void'}· <span class="chip bad">Closed</span>{/if}
 			</p>
 			<p class="desc">{t.project.description}</p>
+			{#if t.ship.status === 'rejected'}
+				<p class="note">
+					This project got rejected, so we recommend you stop working on it. Fixes you already sent
+					still count for your hours.
+				</p>
+			{/if}
 			{#if t.ship.runSteps}
 				<details>
 					<summary>How to run it</summary>
@@ -91,7 +96,7 @@
 				<section>
 					<ShipFixes
 						a={t.a}
-						prs={t.fixes.filter((f) => isLiveFix(f.status))}
+						prs={t.fixes.filter((f) => f.status !== 'withdrawn')}
 						htProjects={data.htProjects}
 						htDown={data.htDown}
 						kairosProjects={data.kairosProjects}

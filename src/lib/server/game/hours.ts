@@ -1,4 +1,4 @@
-import { and, eq, inArray, ne } from 'drizzle-orm';
+import { and, eq, ne } from 'drizzle-orm';
 import { db, schema } from '../db/index.js';
 import { now } from '../clock.js';
 import { logAudit } from '../audit.js';
@@ -9,7 +9,6 @@ import * as kairos from '../services/kairos.js';
 import * as storage from '../services/storage.js';
 import { roundById } from './season.js';
 import { GameError, callService, isDemoUrl, screenshotBytes } from './ships.js';
-import { LIVE_FIX } from '../../game/score.js';
 import type { SessionUser } from '../session.js';
 
 export type FixShipInput = {
@@ -35,13 +34,15 @@ export async function shipFixes(user: SessionUser, assignmentId: number, input: 
 	if (a.hoursStatus === 'approved')
 		throw new GameError('Your fixes for this one are already approved.');
 	if (!user.githubLogin) throw new GameError('Link your GitHub account first (settings).');
+	if (!user.birthday)
+		throw new GameError('Add your birthday on Hack Club Auth, then refresh it in settings.');
 	const login = user.githubLogin.toLowerCase();
 
-	const live = await db
+	const sent = await db
 		.select({ id: schema.bugs.id })
 		.from(schema.bugs)
-		.where(and(eq(schema.bugs.assignmentId, a.id), inArray(schema.bugs.status, [...LIVE_FIX])));
-	if (!live.length)
+		.where(and(eq(schema.bugs.assignmentId, a.id), ne(schema.bugs.status, 'withdrawn')));
+	if (!sent.length)
 		throw new GameError('Send at least one fix PR to this project first. No PR, no hours.');
 
 	const fork = github.parseRepo(input.forkUrl);
@@ -148,13 +149,13 @@ export async function reviewBreakHours(
 				throw new GameError(
 					'This one has no fork or demo. Turn it down so they can ship their fixes.'
 				);
-			const live = await tx
+			const sent = await tx
 				.select({ id: schema.bugs.id })
 				.from(schema.bugs)
-				.where(and(eq(schema.bugs.assignmentId, a.id), inArray(schema.bugs.status, [...LIVE_FIX])));
-			if (!live.length)
+				.where(and(eq(schema.bugs.assignmentId, a.id), ne(schema.bugs.status, 'withdrawn')));
+			if (!sent.length)
 				throw new GameError(
-					'None of their fix PRs on this target are still standing, so there are no hours to approve.'
+					'They withdrew every fix PR on this target (or never sent one), so there are no hours to approve.'
 				);
 		}
 
@@ -180,10 +181,10 @@ export async function reviewBreakHours(
 			});
 			await tx
 				.insert(schema.unifiedOutbox)
-				.values({ assignmentId: a.id })
+				.values({ assignmentId: a.id, state: 'waiting' })
 				.onConflictDoUpdate({
 					target: schema.unifiedOutbox.assignmentId,
-					set: { state: 'queued', error: null }
+					set: { state: 'waiting', error: null }
 				});
 		}
 		await notify(

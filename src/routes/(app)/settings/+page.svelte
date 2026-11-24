@@ -93,10 +93,10 @@
 	</section>
 
 	<section class="card">
-		<h2>Address</h2>
+		<h2>Address and birthday</h2>
 		<p class="muted">
-			This comes from your Hack Club Auth account. Hack Club needs it when your hours are sent over,
-			and Shop prizes get mailed here.
+			These come from your Hack Club Auth account. Hack Club needs them when your hours are sent
+			over, and Shop prizes get mailed to your address.
 		</p>
 		<dl>
 			<dt>Address</dt>
@@ -108,6 +108,8 @@
 					Missing
 				{/if}
 			</dd>
+			<dt>Birthday</dt>
+			<dd>{data.birthday ?? 'Missing'}</dd>
 		</dl>
 		<div class="row">
 			<a class="btn small" href={data.hcaUrl} target="_blank" rel="noopener">

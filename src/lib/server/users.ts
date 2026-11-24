@@ -13,6 +13,7 @@ export type Profile = {
 	verification: string;
 	avatarUrl?: string | null;
 	address?: Address | null;
+	birthday?: string | null;
 };
 
 export async function upsertUser(p: Profile) {
@@ -31,6 +32,7 @@ export async function upsertUser(p: Profile) {
 				verification: p.verification,
 				avatarUrl: p.avatarUrl ?? existing.avatarUrl,
 				address: p.address ?? existing.address,
+				birthday: p.birthday ?? existing.birthday,
 				lastSeenAt: new Date(),
 				...(isAdmin ? { role: 'admin' as const } : {})
 			})
@@ -50,6 +52,7 @@ export async function upsertUser(p: Profile) {
 			verification: p.verification,
 			avatarUrl: p.avatarUrl ?? null,
 			address: p.address ?? null,
+			birthday: p.birthday ?? null,
 			role: isAdmin ? 'admin' : 'user',
 			lastSeenAt: new Date()
 		})

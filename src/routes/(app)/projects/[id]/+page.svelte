@@ -148,11 +148,11 @@
 			taken={data.taken}
 			building={data.building}
 			screenshots={project.screenshots}
-			closesAt={data.round?.breakStartsAt}
+			closesAt={data.closesAt}
 			{offset}
 			again={ship?.status === 'changes'}
 			ready={Boolean(data.me.hackatime && data.me.githubLogin)}
-			details={data.me.hasAddress}
+			details={data.me.hasAddress && data.me.hasBirthday}
 		/>
 	{/if}
 </div>

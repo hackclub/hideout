@@ -42,7 +42,8 @@ export async function myTargets(userId: number, roundId: number) {
 				commitSha: schema.ships.commitSha,
 				screenshots: schema.ships.screenshots,
 				runSteps: schema.ships.runSteps,
-				tier: schema.ships.tier
+				tier: schema.ships.tier,
+				status: schema.ships.status
 			},
 			project: schema.projects,
 			owner: { name: schema.users.name }
@@ -71,6 +72,7 @@ export async function targetCards(userId: number, roundId: number) {
 		owner: t.owner.name,
 		description: t.project.description,
 		screenshot: t.ship.screenshots[0] ?? null,
-		status: targetStamp(t.a.status, t.fixes)
+		status: targetStamp(t.a.status, t.fixes),
+		rejected: t.ship.status === 'rejected'
 	}));
 }

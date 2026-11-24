@@ -51,7 +51,7 @@ export async function generateAssignments(roundId: number, actorId: number | nul
 		raiders: raiderIds.map((userId) => ({ userId })),
 		targets: ships
 			.filter((s) => !banned.has(s.userId))
-			.map((s) => ({ shipId: s.id, ownerId: s.userId, tier: s.tier })),
+			.map((s) => ({ shipId: s.id, ownerId: s.userId, claimedHours: s.claimedHours })),
 		k: r.config.targetsPerRaccoon,
 		pastPairs: new Set(earlier.map((e) => `${e.raccoonId}:${e.ownerId}`))
 	});

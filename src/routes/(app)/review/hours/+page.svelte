@@ -19,7 +19,7 @@
 	<p>
 		Raccoons ship their fixes for each target: their fork, a live demo of it, a screenshot, the fix
 		PRs and one Hackatime project. Try the demo and check the fixes are really in it. Each approved
-		hour pays 10 acorns right away and goes to Unified.
+		hour pays 10 acorns right away and waits for an admin to send it to Airtable.
 	</p>
 </header>
 

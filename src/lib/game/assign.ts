@@ -1,5 +1,5 @@
 export type Raider = { userId: number };
-export type Target = { shipId: number; ownerId: number; tier: number | null };
+export type Target = { shipId: number; ownerId: number; claimedHours: number };
 export type Pair = { userId: number; shipId: number };
 
 export type AssignInput = {
@@ -27,6 +27,12 @@ export function assignTargets({
 	random = Math.random
 }: AssignInput): Pair[] {
 	const load = new Map(targets.map((t) => [t.shipId, 0]));
+	const band = new Map(
+		[...targets]
+			.sort((a, b) => a.claimedHours - b.claimedHours)
+			.map((t, i, all) => [t.shipId, Math.floor((i * 3) / all.length)])
+	);
+	const sameBand = (a: Target, b: Target) => band.get(a.shipId) === band.get(b.shipId);
 	const picks = new Map<number, Target[]>(raiders.map((r) => [r.userId, []]));
 	const order = shuffle(raiders, random);
 	const out: Pair[] = [];
@@ -44,7 +50,7 @@ export function assignTargets({
 				const score =
 					load.get(t.shipId)! * 100 +
 					(pastPairs.has(`${r.userId}:${t.ownerId}`) ? 40 : 0) +
-					(t.tier !== null && mine.some((m) => m.tier === t.tier) ? 5 : 0) +
+					(mine.some((m) => sameBand(m, t)) ? 5 : 0) +
 					random();
 				if (score < bestScore) {
 					bestScore = score;
@@ -62,7 +68,7 @@ export function assignTargets({
 			(sum, t, i) =>
 				sum +
 				(pastPairs.has(`${userId}:${t.ownerId}`) ? 100 : 0) +
-				(t.tier !== null && list.findIndex((x) => x.tier === t.tier) < i ? 1 : 0),
+				(list.findIndex((x) => sameBand(x, t)) < i ? 1 : 0),
 			0
 		);
 	for (let i = 0; i < users.length * 60 && users.length > 1; i++) {

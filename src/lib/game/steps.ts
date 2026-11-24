@@ -32,6 +32,15 @@ const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one :
 export function nextSteps(s: StepInput): Step[] {
 	const steps: Step[] = [];
 	const count = (status: string) => s.ships.filter((x) => x.status === status).length;
+	const changes: Step = {
+		key: 'changes',
+		title:
+			count('changes') === 1
+				? 'Your project needs changes'
+				: `${count('changes')} of your projects need changes`,
+		help: 'A reviewer asked for a few changes. Make them and ship it again.',
+		action: { label: 'See what to change', href: '/projects' }
+	};
 
 	if (s.waiting > 0)
 		steps.push({
@@ -58,16 +67,7 @@ export function nextSteps(s: StepInput): Step[] {
 	switch (s.phase) {
 		case 'upcoming':
 		case 'build':
-			if (count('changes'))
-				steps.push({
-					key: 'changes',
-					title:
-						count('changes') === 1
-							? 'Your project needs changes'
-							: `${count('changes')} of your projects need changes`,
-					help: 'A reviewer asked for a few changes. Make them and ship it again.',
-					action: { label: 'See what to change', href: '/projects' }
-				});
+			if (count('changes')) steps.push(changes);
 			else if (count('pending'))
 				steps.push({
 					key: 'review',
@@ -96,6 +96,7 @@ export function nextSteps(s: StepInput): Step[] {
 			break;
 		case 'break':
 		case 'scoring':
+			if (count('changes')) steps.push(changes);
 			if (s.targets > 0)
 				steps.push({
 					key: 'break',

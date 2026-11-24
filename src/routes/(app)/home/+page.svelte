@@ -47,6 +47,7 @@
 						<b>{t.name}</b>
 						<span class="meta">by {t.owner.split(' ')[0]}</span>
 						<span class="chip {t.status.tone}">{t.status.text}</span>
+						{#if t.rejected}<span class="chip bad">Rejected, best to stop here</span>{/if}
 					</span>
 				</a>
 			</li>

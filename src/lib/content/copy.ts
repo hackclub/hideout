@@ -38,7 +38,7 @@ export const rules = {
 			items: [
 				'A season runs for 8 weeks, split into 4 two-week rounds.',
 				'Week 1 is Build week. Week 2 is Break week.',
-				'You can make a project any time, but you can only ship it during Build week.',
+				'You can make a project any time, but you can only ship it during Build week. If a reviewer asks for changes, you can ship it again during Break week too.',
 				"Every round's ship is a new project. If it builds on something older, tick the update box and say what's new."
 			]
 		},
@@ -46,7 +46,7 @@ export const rules = {
 			title: 'Shipping',
 			items: [
 				'To ship, you need a public GitHub repo, a working demo link, 2 screenshots, and a README that explains your project and how to run it.',
-				"Only hours from that round's Build week count, and each Hackatime project can only count for one ship.",
+				"Only hours from that round's Build week count, and each Hackatime project can only count for one ship. If you ship again after a reviewer asks for changes, your hours count up to when you ship it again.",
 				"Once you ship, your project is frozen at that commit. You can't edit it unless a reviewer asks for changes."
 			]
 		},
@@ -65,7 +65,8 @@ export const rules = {
 				"During Break week, you'll be assigned 3 other people's projects to break into.",
 				"A bug is anything reproducible that crashes, is a security hole, or doesn't work the way it was intended to.",
 				'Once you find a bug, open a PR on their repo that fixes it, then submit it here.',
-				'To get your break hours, deploy your fork with your fixes and ship it here, one per target.',
+				'To get your break hours, send at least one fix PR to the target, then deploy your fork with your fixes and ship it here, one per target.',
+				'Duplicate and "not a bug" PRs still earn you hours, just no points.',
 				"Only PRs opened during Break week are valid, and PRs that only change docs (like the README) don't count.",
 				'You can submit up to 3 fixes per target project each round.',
 				'Track your time finding and fixing bugs using Hackatime, make sure to make a new folder for each target.'

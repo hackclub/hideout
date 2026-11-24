@@ -45,6 +45,12 @@ describe('next steps', () => {
 		expect(keys({ phase: 'break', targets: 0 })).toEqual(['no-targets']);
 	});
 
+	it('keeps asking for changes in break week and wrap-up, ahead of the targets', () => {
+		const ships = [{ status: 'changes' }];
+		expect(keys({ phase: 'break', targets: 3, ships })).toEqual(['changes', 'break']);
+		expect(keys({ phase: 'scoring', targets: 3, ships })).toEqual(['changes', 'break']);
+	});
+
 	it('has something to say before the season starts', () => {
 		expect(keys({ phase: null })).toEqual(['none']);
 	});

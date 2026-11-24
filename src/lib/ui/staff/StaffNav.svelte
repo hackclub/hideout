@@ -31,7 +31,7 @@
 		{ href: '/admin/orders', label: 'Orders', n: counts.orders },
 		{ href: '/admin/users', label: 'Users' },
 		{ href: '/admin/audit', label: 'Audit log' },
-		{ href: '/admin/unified', label: 'Unified', n: counts.unified, alarm: true }
+		{ href: '/admin/unified', label: 'Airtable', n: counts.unified, alarm: true }
 	]);
 
 	const here = (l: Link) =>
