@@ -4,7 +4,7 @@
 	import Stamp from '#lib/ui/Stamp.svelte';
 	import StaffFlash from '#lib/ui/staff/StaffFlash.svelte';
 	import { orderStamp } from '#lib/game/labels.js';
-	import { utc } from '#lib/ui/staff/format.js';
+	import { et } from '#lib/ui/staff/format.js';
 	import Facts from '../_components/Facts.svelte';
 	import PageHead from '../_components/PageHead.svelte';
 	import Panel from '../_components/Panel.svelte';
@@ -75,7 +75,7 @@
 					<dt>Total</dt>
 					<dd><Acorn size={15} /> {o.order.total} <span class="meta">{o.item.category}</span></dd>
 					<dt>Placed</dt>
-					<dd>{utc(o.order.createdAt)}</dd>
+					<dd>{et(o.order.createdAt)}</dd>
 					{#if o.order.note}<dt>Their note</dt>
 						<dd>{o.order.note}</dd>{/if}
 					{#if physical}
@@ -99,7 +99,7 @@
 					{#if o.order.staffNote}<dt>Staff note</dt>
 						<dd>{o.order.staffNote}</dd>{/if}
 					{#if o.handler?.name}<dt>Handled by</dt>
-						<dd>{o.handler.name} · {utc(o.order.updatedAt)}</dd>{/if}
+						<dd>{o.handler.name} · {et(o.order.updatedAt)}</dd>{/if}
 				</Facts>
 				{#if open}
 					<form method="POST" action="?/set" use:enhance>

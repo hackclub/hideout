@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { utc } from '#lib/ui/staff/format.js';
+	import { et } from '#lib/ui/staff/format.js';
 	import Fields from '../_components/Fields.svelte';
 	import PageHead from '../_components/PageHead.svelte';
 	import Panel from '../_components/Panel.svelte';
@@ -73,7 +73,7 @@
 			{#each data.rows as r (r.entry.id)}
 				{@const href = link(r.entry.targetType, r.entry.targetId)}
 				<tr>
-					<td class="nowrap">{utc(r.entry.createdAt).replace(' UTC', '')}</td>
+					<td class="nowrap">{et(r.entry.createdAt).replace(' ET', '')}</td>
 					<td class="nowrap">
 						{#if r.actor?.id}<a href="/admin/users/{r.actor.id}">{r.actor.name}</a>{:else}<span
 								class="muted"

@@ -4,7 +4,8 @@
 	import Stamp from '#lib/ui/Stamp.svelte';
 	import StaffFlash from '#lib/ui/staff/StaffFlash.svelte';
 	import { phaseLabel } from '#lib/game/phase.js';
-	import { num, utc, utcInput } from '#lib/ui/staff/format.js';
+	import { num, et } from '#lib/ui/staff/format.js';
+	import { etInput } from '#lib/game/time.js';
 	import { keep } from '#lib/ui/staff/forms.js';
 	import Facts from './_components/Facts.svelte';
 	import Fields from './_components/Fields.svelte';
@@ -67,7 +68,7 @@
 
 <PageHead title="Rounds">
 	{#if data.season}
-		{data.season.name} started {utc(data.season.startsAt)}. All times here are UTC.
+		{data.season.name} started {et(data.season.startsAt)}. All times here are New York time (ET).
 	{:else}
 		No season yet. Run the seed script to create one.
 	{/if}
@@ -82,7 +83,7 @@
 					<div class="top">
 						<h2>Round {r.number}</h2>
 						<Stamp text={phaseLabel[r.phase]} tone={phaseTone[r.phase]} />
-						{#if r.assignedAt}<span class="meta">Targets out {utc(r.assignedAt)}</span>{/if}
+						{#if r.assignedAt}<span class="meta">Targets out {et(r.assignedAt)}</span>{/if}
 						{#if r.rolloverIn > 0}<span class="meta">
 								{num(r.rolloverIn)} acorns rolled in
 							</span>{/if}
@@ -101,7 +102,7 @@
 										id="b-{r.id}"
 										type="datetime-local"
 										name="buildStartsAt"
-										value={utcInput(r.buildStartsAt)}
+										value={etInput(r.buildStartsAt)}
 										required
 									/>
 								</div>
@@ -111,7 +112,7 @@
 										id="k-{r.id}"
 										type="datetime-local"
 										name="breakStartsAt"
-										value={utcInput(r.breakStartsAt)}
+										value={etInput(r.breakStartsAt)}
 										required
 									/>
 								</div>
@@ -121,22 +122,22 @@
 										id="e-{r.id}"
 										type="datetime-local"
 										name="breakEndsAt"
-										value={utcInput(r.breakEndsAt)}
+										value={etInput(r.breakEndsAt)}
 										required
 									/>
 								</div>
 								<div><button class="btn small">Save dates</button></div>
 							</Fields>
-							<p class="meta">Merges count until {utc(r.scoringEndsAt)}.</p>
+							<p class="meta">Merges count until {et(r.scoringEndsAt)}.</p>
 						</form>
 					{:else}
 						<Facts>
 							<dt>Build</dt>
-							<dd>{utc(r.buildStartsAt)}</dd>
+							<dd>{et(r.buildStartsAt)}</dd>
 							<dt>Break</dt>
-							<dd>{utc(r.breakStartsAt)} to {utc(r.breakEndsAt)}</dd>
+							<dd>{et(r.breakStartsAt)} to {et(r.breakEndsAt)}</dd>
 							<dt>Closed</dt>
-							<dd>{utc(r.closedAt)}</dd>
+							<dd>{et(r.closedAt)}</dd>
 							<dt>Paid</dt>
 							<dd>
 								pool <Acorn size={14} />
@@ -164,7 +165,7 @@
 							</label>
 							<button class="btn small berry" disabled={r.phase !== 'ready'}>Close round</button>
 							{#if r.phase !== 'ready'}<span class="meta">
-									Opens after {utc(r.scoringEndsAt)}.
+									Opens after {et(r.scoringEndsAt)}.
 								</span>{/if}
 						</form>
 					{/if}

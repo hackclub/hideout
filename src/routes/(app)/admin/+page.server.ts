@@ -10,6 +10,7 @@ import { closeRound, generateAssignments, previewRound } from '#lib/server/game/
 import { currentSeason, seasonConfig } from '#lib/server/game/season.js';
 import { GameError } from '#lib/server/game/ships.js';
 import { attempt, num, str } from '#lib/server/actions.js';
+import { parseEt } from '#lib/game/time.js';
 import type { SeasonConfig } from '#lib/server/db/schema.js';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -77,9 +78,8 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 	};
 };
 
-function utcDate(f: FormData, key: string) {
-	const v = str(f, key).trim();
-	return new Date(v.length === 16 ? `${v}:00Z` : `${v}Z`);
+function etDate(f: FormData, key: string) {
+	return parseEt(str(f, key).trim());
 }
 
 export const actions: Actions = {
@@ -89,9 +89,9 @@ export const actions: Actions = {
 		return attempt(
 			() =>
 				updateRoundDates(me, num(f, 'roundId'), {
-					buildStartsAt: utcDate(f, 'buildStartsAt'),
-					breakStartsAt: utcDate(f, 'breakStartsAt'),
-					breakEndsAt: utcDate(f, 'breakEndsAt')
+					buildStartsAt: etDate(f, 'buildStartsAt'),
+					breakStartsAt: etDate(f, 'breakStartsAt'),
+					breakEndsAt: etDate(f, 'breakEndsAt')
 				}),
 			'Dates saved.'
 		);

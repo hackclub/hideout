@@ -5,7 +5,7 @@
 	import StaffFlash from '#lib/ui/staff/StaffFlash.svelte';
 	import { acorns, orderStamp, shipStamp } from '#lib/game/labels.js';
 	import { keep } from '#lib/ui/staff/forms.js';
-	import { hrs, num, utc } from '#lib/ui/staff/format.js';
+	import { hrs, num, et } from '#lib/ui/staff/format.js';
 	import Facts from '../../_components/Facts.svelte';
 	import PageHead from '../../_components/PageHead.svelte';
 	import Panel from '../../_components/Panel.svelte';
@@ -74,9 +74,9 @@
 			<dt>Fix PRs</dt>
 			<dd>{data.fixes.sent} sent, {data.fixes.merged} merged</dd>
 			<dt>Joined</dt>
-			<dd>{utc(u.createdAt)}</dd>
+			<dd>{et(u.createdAt)}</dd>
 			<dt>Last seen</dt>
-			<dd>{utc(u.lastSeenAt)}</dd>
+			<dd>{et(u.lastSeenAt)}</dd>
 			{#if u.banned}<dt>Ban reason</dt>
 				<dd>{u.bannedReason ?? '-'}</dd>{/if}
 			<dt>Audit</dt>
@@ -91,7 +91,7 @@
 				<tbody>
 					{#each data.ledger as l (l.entry.id)}
 						<tr>
-							<td class="nowrap">{utc(l.entry.createdAt).replace(' UTC', '')}</td>
+							<td class="nowrap">{et(l.entry.createdAt).replace(' ET', '')}</td>
 							<td>
 								{reasons[l.entry.reason] ?? l.entry.reason}{l.round?.number
 									? ` · R${l.round.number}`
@@ -151,7 +151,7 @@
 							<td>{o.item.name}{o.order.quantity > 1 ? ` x${o.order.quantity}` : ''}</td>
 							<td class="n">{o.order.total}</td>
 							<td><Stamp {...orderStamp[o.order.status]} /></td>
-							<td class="nowrap">{utc(o.order.createdAt).replace(' UTC', '')}</td>
+							<td class="nowrap">{et(o.order.createdAt).replace(' ET', '')}</td>
 						</tr>
 					{/each}
 				</tbody>

@@ -4,7 +4,7 @@
 	import FixCard from '#lib/ui/staff/FixCard.svelte';
 	import StaffFlash from '#lib/ui/staff/StaffFlash.svelte';
 	import { sevTone } from '#lib/game/labels.js';
-	import { utc } from '#lib/ui/staff/format.js';
+	import { et } from '#lib/ui/staff/format.js';
 	import type { PageProps } from './$types';
 
 	let { data, form }: PageProps = $props();
@@ -37,7 +37,7 @@
 				{#snippet facts()}
 					<dt>Accepted</dt>
 					<dd>
-						{u.bug.resolvedAt ? utc(u.bug.resolvedAt) : '-'}
+						{u.bug.resolvedAt ? et(u.bug.resolvedAt) : '-'}
 						{#if u.bug.autoAccepted}<span class="tag">no answer, auto-accepted</span>{/if}
 						{#if u.bug.overturned}<span class="tag warn">after a dispute</span>{/if}
 					</dd>

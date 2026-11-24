@@ -1,7 +1,7 @@
 <script lang="ts">
 	import Icon from '#lib/ui/Icon.svelte';
 	import { phaseLabel } from '#lib/game/phase.js';
-	import { utc } from '#lib/ui/staff/format.js';
+	import { et } from '#lib/ui/staff/format.js';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
@@ -66,7 +66,9 @@
 <header class="page-head">
 	<h1>Review desk</h1>
 	{#if data.round}
-		<p>{data.season?.name}, round {data.round.number}. Times on staff pages are in UTC.</p>
+		<p>
+			{data.season?.name}, round {data.round.number}. Times on staff pages are New York time (ET).
+		</p>
 	{:else}
 		<p>No season yet.</p>
 	{/if}
@@ -78,7 +80,7 @@
 			<li class:done={reached(s.key)} class:now={data.round.phase === s.key}>
 				<span class="dot" aria-hidden="true"></span>
 				<span class="mini-label">{s.label}</span>
-				{utc(s.at).replace(' UTC', '')}
+				{et(s.at).replace(' ET', '')}
 			</li>
 		{/each}
 	</ol>
@@ -118,7 +120,7 @@
 								<strong class="nowrap">Round {r.number}</strong>
 								<span class="sub muted small">{phaseLabel[r.phase]}</span>
 								{#if r.phase === 'scoring'}<span class="sub small muted">
-										Merges count until {utc(r.scoringEndsAt)}
+										Merges count until {et(r.scoringEndsAt)}
 									</span>{/if}
 								{#if r.phase === 'ready'}<span class="sub small">
 										Ready to close{#if data.me.role === 'admin'}: <a

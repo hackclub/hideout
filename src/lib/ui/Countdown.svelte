@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { TZ } from '#lib/game/time.js';
 
 	let { to, offset = 0 }: { to: Date | string; offset?: number } = $props();
 	let clientNow = $state(Date.now());
@@ -22,13 +23,14 @@
 	});
 
 	const local = $derived(
-		new Date(to).toLocaleString(undefined, {
+		new Date(to).toLocaleString('en-US', {
+			timeZone: TZ,
 			weekday: 'short',
 			month: 'short',
 			day: 'numeric',
 			hour: 'numeric',
 			minute: '2-digit'
-		})
+		}) + ' ET'
 	);
 </script>
 

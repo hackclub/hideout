@@ -1,3 +1,5 @@
+import { TZ } from './time.js';
+
 type Tone = 'ok' | 'bad' | 'warn' | 'info' | 'plain';
 
 export const shipStamp: Record<string, { text: string; tone: Tone }> = {
@@ -44,16 +46,20 @@ export function acorns(n: number) {
 }
 
 export function when(d: Date | string) {
-	return new Date(d).toLocaleString(undefined, {
-		month: 'short',
-		day: 'numeric',
-		hour: 'numeric',
-		minute: '2-digit'
-	});
+	return (
+		new Date(d).toLocaleString('en-US', {
+			timeZone: TZ,
+			month: 'short',
+			day: 'numeric',
+			hour: 'numeric',
+			minute: '2-digit'
+		}) + ' ET'
+	);
 }
 
 export function day(d: Date | string) {
-	return new Date(d).toLocaleDateString(undefined, {
+	return new Date(d).toLocaleDateString('en-US', {
+		timeZone: TZ,
 		weekday: 'short',
 		month: 'short',
 		day: 'numeric'

@@ -1,3 +1,5 @@
+import { etDay } from './time.js';
+
 export type UnifiedInput = {
 	appUrl: string;
 	ship: {
@@ -36,7 +38,7 @@ export type UnifiedInput = {
 	reviewer: { name: string } | null;
 };
 
-const day = (d: Date) => d.toISOString().slice(0, 10);
+const day = (d: Date) => etDay(d);
 
 export function absoluteUrl(url: string, appUrl: string) {
 	return /^https?:\/\//i.test(url) ? url : `${appUrl}${url.startsWith('/') ? '' : '/'}${url}`;

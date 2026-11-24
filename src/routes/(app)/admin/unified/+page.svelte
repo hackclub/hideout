@@ -2,7 +2,7 @@
 	import { enhance } from '$app/forms';
 	import Stamp from '#lib/ui/Stamp.svelte';
 	import StaffFlash from '#lib/ui/staff/StaffFlash.svelte';
-	import { hrs, utc } from '#lib/ui/staff/format.js';
+	import { hrs, et } from '#lib/ui/staff/format.js';
 	import PageHead from '../_components/PageHead.svelte';
 	import Panel from '../_components/Panel.svelte';
 	import Stats from '../_components/Stats.svelte';
@@ -72,7 +72,7 @@
 							<Stamp text={r.o.state} tone={tone[r.o.state as keyof typeof tone] ?? 'plain'} />
 						</td>
 						<td class="err">{r.o.error ?? ''}</td>
-						<td class="nowrap">{r.o.sentAt ? utc(r.o.sentAt).replace(' UTC', '') : '-'}</td>
+						<td class="nowrap">{r.o.sentAt ? et(r.o.sentAt).replace(' ET', '') : '-'}</td>
 						<td>
 							{#if r.o.state === 'error'}
 								<form method="POST" action="?/retry" use:enhance>

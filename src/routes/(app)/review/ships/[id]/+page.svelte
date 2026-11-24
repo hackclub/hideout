@@ -4,7 +4,7 @@
 	import StaffFlash from '#lib/ui/staff/StaffFlash.svelte';
 	import Who from '#lib/ui/staff/Who.svelte';
 	import { bugStamp, sevTone, shipStamp } from '#lib/game/labels.js';
-	import { age, hrs, repoName, shortSha, utc } from '#lib/ui/staff/format.js';
+	import { age, hrs, repoName, shortSha, et } from '#lib/ui/staff/format.js';
 	import { tiers, verdicts } from '#lib/ui/staff/tiers.js';
 	import type { PageProps } from './$types';
 
@@ -117,9 +117,9 @@
 					<strong>{hrs(ship.claimedHours)}</strong>
 					<span class="muted small">
 						{#if new Date(data.shippedAt) > new Date(data.shipRound.buildStartsAt)}
-							from {utc(data.shipRound.buildStartsAt)} to {utc(data.shippedAt)}
+							from {et(data.shipRound.buildStartsAt)} to {et(data.shippedAt)}
 						{:else}
-							counted from {utc(data.shipRound.buildStartsAt)}
+							counted from {et(data.shipRound.buildStartsAt)}
 						{/if}
 					</span>
 				</dd>
@@ -146,7 +146,7 @@
 					href={data.me.role === 'admin' ? `/admin/users/${data.maker.id}` : null}
 				/>
 				{#if data.maker.banned}<span class="tag bad">Banned</span>{/if}
-				<span class="muted small">· joined {utc(data.maker.createdAt).replace(' UTC', '')}</span>
+				<span class="muted small">· joined {et(data.maker.createdAt).replace(' ET', '')}</span>
 			</p>
 			{#if data.past.length}
 				<span class="mini-label">Other ships by them</span>
@@ -218,7 +218,7 @@
 				<dt>By</dt>
 				<dd>
 					{data.reviewer ?? '-'}
-					{#if ship.reviewedAt}<span class="muted small">{utc(ship.reviewedAt)}</span>{/if}
+					{#if ship.reviewedAt}<span class="muted small">{et(ship.reviewedAt)}</span>{/if}
 				</dd>
 				{#if ship.reviewNote}<dt>Note</dt>
 					<dd>{ship.reviewNote}</dd>{/if}

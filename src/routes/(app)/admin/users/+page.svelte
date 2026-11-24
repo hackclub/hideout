@@ -1,7 +1,7 @@
 <script lang="ts">
 	import Acorn from '#lib/ui/Acorn.svelte';
 	import { acorns } from '#lib/game/labels.js';
-	import { utc } from '#lib/ui/staff/format.js';
+	import { et } from '#lib/ui/staff/format.js';
 	import PageHead from '../_components/PageHead.svelte';
 	import Panel from '../_components/Panel.svelte';
 	import Table from '../_components/Table.svelte';
@@ -55,7 +55,7 @@
 						{:else}<span class="chip ok">ok</span>{/if}
 					</td>
 					<td class="n"><Acorn size={14} /> {acorns(u.balance)}</td>
-					<td class="nowrap">{utc(u.createdAt).replace(' UTC', '')}</td>
+					<td class="nowrap">{et(u.createdAt).replace(' ET', '')}</td>
 				</tr>
 			{:else}
 				<tr><td colspan="7" class="muted">Nobody matches "{data.q}".</td></tr>

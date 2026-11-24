@@ -1,7 +1,7 @@
 <script lang="ts">
 	import Stamp from '#lib/ui/Stamp.svelte';
 	import { shipStamp } from '#lib/game/labels.js';
-	import { age, hrs } from '#lib/ui/staff/format.js';
+	import { age, et, hrs } from '#lib/ui/staff/format.js';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
@@ -63,7 +63,7 @@
 									</span>{/if}
 							</td>
 							<td class="n">{s.round.number}</td>
-							<td class="nowrap" title={new Date(s.shippedAt).toISOString()}>
+							<td class="nowrap" title={et(s.shippedAt)}>
 								{age(s.shippedAt, data.now)} ago
 							</td>
 							<td class="n">{hrs(s.ship.claimedHours)}</td>

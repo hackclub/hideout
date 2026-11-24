@@ -39,7 +39,7 @@ const input = (over: Partial<UnifiedInput> = {}): UnifiedInput => ({
 	},
 	project: { description: 'A notes app for the woods.', updateDescription: null },
 	season: { name: 'Season 1' },
-	round: { number: 2, buildStartsAt: new Date('2026-11-02T00:00:00Z') },
+	round: { number: 2, buildStartsAt: new Date('2026-11-02T00:00:00-05:00') },
 	reviewer: { name: 'Seba' },
 	...over
 });
@@ -154,8 +154,8 @@ const fixInput = (over: Partial<UnifiedFixInput> = {}): UnifiedFixInput => ({
 	season: { name: 'Season 1' },
 	round: {
 		number: 2,
-		breakStartsAt: new Date('2026-11-16T00:00:00Z'),
-		breakEndsAt: new Date('2026-11-23T00:00:00Z')
+		breakStartsAt: new Date('2026-11-16T00:00:00-05:00'),
+		breakEndsAt: new Date('2026-11-23T00:00:00-05:00')
 	},
 	reviewer: { name: 'Seba' },
 	...over

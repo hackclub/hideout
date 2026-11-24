@@ -1,3 +1,5 @@
+import { TZ } from '#lib/game/time.js';
+
 export function hrs(n: number | null | undefined) {
 	if (n === null || n === undefined) return '-';
 	return `${Math.round(n * 100) / 100} h`;
@@ -9,23 +11,18 @@ export function num(n: number | null | undefined, digits = 2) {
 	return (Math.round(n * f) / f).toLocaleString('en-US');
 }
 
-export function utc(d: Date | string | null | undefined) {
+export function et(d: Date | string | null | undefined) {
 	if (!d) return '-';
 	return (
 		new Date(d).toLocaleString('en-GB', {
-			timeZone: 'UTC',
+			timeZone: TZ,
 			weekday: 'short',
 			day: 'numeric',
 			month: 'short',
 			hour: '2-digit',
 			minute: '2-digit'
-		}) + ' UTC'
+		}) + ' ET'
 	);
-}
-
-export function utcInput(d: Date | string | null | undefined) {
-	if (!d) return '';
-	return new Date(d).toISOString().slice(0, 16);
 }
 
 export function age(from: Date | string, to: Date | string) {
