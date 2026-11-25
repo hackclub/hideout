@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { faq, site } from '#lib/content/copy.js';
+	import { FRIEND_ACORNS } from '#lib/game/invites.js';
 	import Faq from './Faq.svelte';
 	import type { PageProps } from './$types';
 
@@ -33,6 +34,11 @@
 </svelte:head>
 
 <section class="wrap hero">
+	{#if data.invitedBy}
+		<p class="invited">
+			{data.invitedBy} invited you. Ship your first project for {FRIEND_ACORNS} bonus acorns.
+		</p>
+	{/if}
 	<h1><span>Build your hideout.</span> <span>Keep Heidi out.</span></h1>
 	<p class="lead">
 		Build your best project for a week, then spend a week breaking other people's projects.
@@ -81,6 +87,14 @@
 <style>
 	.hero {
 		padding-block: var(--s-8) var(--s-7);
+	}
+	.invited {
+		display: inline-block;
+		margin: 0 0 var(--s-5);
+		padding: var(--s-2) var(--s-4);
+		font-weight: 600;
+		background: var(--surface);
+		border-radius: var(--r-1);
 	}
 	h1 {
 		margin: 0;

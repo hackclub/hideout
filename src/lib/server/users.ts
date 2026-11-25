@@ -1,6 +1,7 @@
 import { eq } from 'drizzle-orm';
 import { db, schema } from './db/index.js';
 import { config } from './config.js';
+import { inviterByCode, notifyJoined } from './invites.js';
 import type { Address } from './db/schema.js';
 
 export type Profile = {
@@ -16,7 +17,7 @@ export type Profile = {
 	birthday?: string | null;
 };
 
-export async function upsertUser(p: Profile) {
+export async function upsertUser(p: Profile, inviteCode?: string) {
 	const isAdmin =
 		(p.slackId && config.adminSlackIds.includes(p.slackId)) || config.adminEmails.includes(p.email);
 	const [existing] = await db.select().from(schema.users).where(eq(schema.users.hcaId, p.hcaId));
@@ -40,6 +41,7 @@ export async function upsertUser(p: Profile) {
 			.returning();
 		return u;
 	}
+	const inviter = inviteCode ? await inviterByCode(inviteCode) : null;
 	const [u] = await db
 		.insert(schema.users)
 		.values({
@@ -54,9 +56,11 @@ export async function upsertUser(p: Profile) {
 			address: p.address ?? null,
 			birthday: p.birthday ?? null,
 			role: isAdmin ? 'admin' : 'user',
+			invitedBy: inviter?.id ?? null,
 			lastSeenAt: new Date()
 		})
 		.returning();
+	if (inviter) await notifyJoined(inviter.id, u.id);
 	return u;
 }
 

@@ -3,6 +3,7 @@ import { db, isUniqueViolation, schema } from '../db/index.js';
 import { now } from '../clock.js';
 import { logAudit } from '../audit.js';
 import { notify } from '../notify.js';
+import { payReferral } from '../invites.js';
 import * as github from '../services/github.js';
 import * as hackatime from '../services/hackatime.js';
 import * as kairos from '../services/kairos.js';
@@ -358,13 +359,14 @@ export async function reviewShip(reviewer: SessionUser, shipId: number, input: R
 					target: schema.unifiedOutbox.shipId,
 					set: { state: 'waiting', error: null }
 				});
+			const bonus = s.status === 'approved' ? 0 : await payReferral(tx, s, reviewer.id);
 			await notify(
 				s.userId,
 				{
 					kind: 'ship.approved',
 					title:
 						s.status === 'approved' ? 'Your ship review was updated' : 'Your project was approved',
-					body: `Tier ${input.tier}, ${hours} hours approved (${amount} acorns).`,
+					body: `Tier ${input.tier}, ${hours} hours approved (${amount} acorns).${bonus ? ` Plus ${bonus} bonus acorns for joining with an invite.` : ''}`,
 					link: `/projects/${s.projectId}`,
 					dedupeKey: s.status === 'approved' ? undefined : `ship.approved.${s.id}`
 				},

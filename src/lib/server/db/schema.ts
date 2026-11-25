@@ -10,7 +10,8 @@ import {
 	numeric,
 	serial,
 	uniqueIndex,
-	index
+	index,
+	type AnyPgColumn
 } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 
@@ -50,10 +51,17 @@ export const users = pgTable(
 		address: jsonb('address').$type<Address>(),
 		banned: boolean('banned').notNull().default(false),
 		bannedReason: text('banned_reason'),
+		inviteCode: text('invite_code')
+			.notNull()
+			.unique()
+			.default(sql`substr(md5(random()::text), 1, 10)`),
+		invitedBy: integer('invited_by').references((): AnyPgColumn => users.id),
+		inviteHidden: boolean('invite_hidden').notNull().default(false),
 		createdAt: created(),
 		lastSeenAt: ts('last_seen_at')
 	},
 	(t) => [
+		index('users_invited_by').on(t.invitedBy),
 		uniqueIndex('users_hackatime_user_id')
 			.on(t.hackatimeUserId)
 			.where(sql`hackatime_user_id is not null`),
@@ -304,7 +312,8 @@ export const ledgerReason = pgEnum('ledger_reason', [
 	'season_prize',
 	'purchase',
 	'refund',
-	'manual'
+	'manual',
+	'referral'
 ]);
 
 export const ledger = pgTable(

@@ -1,4 +1,7 @@
 <script lang="ts">
+	import { enhance } from '$app/forms';
+	import InviteLink from '#lib/ui/InviteLink.svelte';
+	import { FRIEND_ACORNS, INVITER_ACORNS } from '#lib/game/invites.js';
 	import KairosBanner from './KairosBanner.svelte';
 	import type { PageProps } from './$types';
 
@@ -33,6 +36,19 @@
 		</ul>
 	{/if}
 </article>
+
+{#if data.invite}
+	<article class="card invite">
+		<form method="POST" action="?/hideInvite" use:enhance>
+			<button class="x" aria-label="Hide this card">×</button>
+		</form>
+		<h2>Invite a friend</h2>
+		<p class="help">
+			When they ship, you get {INVITER_ACORNS} acorns and they get {FRIEND_ACORNS}.
+		</p>
+		<InviteLink {...data.invite} />
+	</article>
+{/if}
 
 {#if data.targets.length}
 	<h2 class="sub">Your targets</h2>
@@ -84,6 +100,29 @@
 	}
 	a.chip:hover {
 		color: var(--text);
+	}
+	.invite {
+		margin-top: var(--s-5);
+	}
+	.invite h2 {
+		padding-right: var(--s-6);
+	}
+	.x {
+		position: absolute;
+		top: var(--s-3);
+		right: var(--s-3);
+		width: 32px;
+		height: 32px;
+		font: 600 var(--fs-3) / 1 var(--font-body);
+		color: var(--muted);
+		background: none;
+		border: 0;
+		border-radius: var(--r-1);
+		cursor: pointer;
+	}
+	.x:hover {
+		color: var(--text);
+		background: var(--well);
 	}
 	.sub {
 		margin: var(--s-7) 0 var(--s-4);

@@ -4,8 +4,11 @@ import { gameState } from '#lib/server/game/season.js';
 import { shipsIn } from '#lib/server/game/ships.js';
 import { targetCards } from '#lib/server/views.js';
 import * as kairos from '#lib/server/services/kairos.js';
+import { config } from '#lib/server/config.js';
+import { inviteCounts } from '#lib/server/invites.js';
 import { nextSteps } from '#lib/game/steps.js';
-import type { PageServerLoad } from './$types';
+import { inviteUrl } from '#lib/game/invites.js';
+import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	const user = locals.user!;
@@ -34,5 +37,18 @@ export const load: PageServerLoad = async ({ locals }) => {
 		waiting
 	});
 
-	return { steps, targets, kairosBanner: (await kairosAccount) !== true };
+	const invite = user.inviteHidden
+		? null
+		: { url: inviteUrl(config.appUrl, user.inviteCode), ...(await inviteCounts(user.id)) };
+
+	return { steps, targets, invite, kairosBanner: (await kairosAccount) !== true };
+};
+
+export const actions: Actions = {
+	hideInvite: async ({ locals }) => {
+		await db
+			.update(schema.users)
+			.set({ inviteHidden: true })
+			.where(eq(schema.users.id, locals.user!.id));
+	}
 };

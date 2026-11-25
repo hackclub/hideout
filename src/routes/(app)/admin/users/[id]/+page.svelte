@@ -24,7 +24,8 @@
 		season_prize: 'Season prize',
 		purchase: 'Order',
 		refund: 'Refund',
-		manual: 'Manual'
+		manual: 'Manual',
+		referral: 'Invite bonus'
 	};
 </script>
 
@@ -73,6 +74,10 @@
 			</dd>
 			<dt>Fix PRs</dt>
 			<dd>{data.fixes.sent} sent, {data.fixes.merged} merged</dd>
+			{#if data.inviter}<dt>Invited by</dt>
+				<dd><a href="/admin/users/{data.inviter.id}">{data.inviter.name}</a></dd>{/if}
+			<dt>Invited</dt>
+			<dd>{data.invites.joined} ({data.invites.shipped} shipped)</dd>
 			<dt>Joined</dt>
 			<dd>{et(u.createdAt)}</dd>
 			<dt>Last seen</dt>
@@ -196,6 +201,21 @@
 				<div class="field"><button class="btn small">Save adjustment</button></div>
 			</form>
 		</Panel>
+
+		{#if data.canSetInviter}
+			<Panel
+				title="Set inviter"
+				note="Only while they have no approved ship. Once set, it can't be changed."
+			>
+				<form method="POST" action="?/inviter" use:enhance>
+					<div class="field">
+						<label for="inviterId">Inviter user id</label>
+						<input id="inviterId" name="inviterId" type="number" min="1" step="1" required />
+					</div>
+					<div class="field"><button class="btn small">Set inviter</button></div>
+				</form>
+			</Panel>
+		{/if}
 
 		{#if u.banned}
 			<Panel

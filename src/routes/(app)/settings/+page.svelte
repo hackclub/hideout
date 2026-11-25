@@ -3,6 +3,8 @@
 	import { page } from '$app/state';
 	import Flash from '#lib/ui/Flash.svelte';
 	import Stamp from '#lib/ui/Stamp.svelte';
+	import InviteLink from '#lib/ui/InviteLink.svelte';
+	import { FRIEND_ACORNS, INVITER_ACORNS } from '#lib/game/invites.js';
 	import type { PageProps } from './$types';
 
 	let { data, form }: PageProps = $props();
@@ -117,6 +119,14 @@
 			</a>
 			<a class="btn small ghost" href="/auth/start?next=/settings">Refresh</a>
 		</div>
+	</section>
+
+	<section class="card">
+		<h2>Invite a friend</h2>
+		<p class="muted">
+			When they ship, you get {INVITER_ACORNS} acorns and they get {FRIEND_ACORNS}.
+		</p>
+		<InviteLink {...data.invite} />
 	</section>
 </div>
 

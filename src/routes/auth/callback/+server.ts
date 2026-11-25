@@ -3,6 +3,7 @@ import { config } from '#lib/server/config.js';
 import { exchangeCode } from '#lib/server/services/hca.js';
 import { isStaff, upsertUser } from '#lib/server/users.js';
 import { createSession } from '#lib/server/session.js';
+import { INVITE_COOKIE } from '#lib/server/invites.js';
 import type { RequestHandler } from './$types';
 
 export const GET: RequestHandler = async ({ cookies, url }) => {
@@ -15,17 +16,22 @@ export const GET: RequestHandler = async ({ cookies, url }) => {
 	if (!code) error(400, 'Missing code from Hack Club Auth.');
 
 	const profile = await exchangeCode(code, `${config.appUrl}/auth/callback`);
-	const user = await upsertUser({
-		hcaId: profile.sub,
-		email: profile.email,
-		name: profile.name,
-		firstName: profile.firstName,
-		lastName: profile.lastName,
-		slackId: profile.slackId,
-		address: profile.address,
-		birthday: profile.birthday,
-		verification: profile.verification
-	});
+	const ref = cookies.get(INVITE_COOKIE);
+	const user = await upsertUser(
+		{
+			hcaId: profile.sub,
+			email: profile.email,
+			name: profile.name,
+			firstName: profile.firstName,
+			lastName: profile.lastName,
+			slackId: profile.slackId,
+			address: profile.address,
+			birthday: profile.birthday,
+			verification: profile.verification
+		},
+		ref
+	);
+	if (ref) cookies.delete(INVITE_COOKIE, { path: '/' });
 	await createSession(cookies, user.id);
 	redirect(303, profile.eligible ? safeNext(next) : isStaff(user) ? '/review' : '/ineligible');
 };

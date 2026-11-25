@@ -6,6 +6,7 @@ import { requireUser } from '#lib/server/guards.js';
 import { closeDb, migrateDb } from '#lib/server/db/index.js';
 import { startupProblems } from '#lib/server/startup.js';
 import { seedIfEmpty } from '#lib/server/seed.js';
+import { rememberInvite } from '#lib/server/invites.js';
 
 export const init: ServerInit = async () => {
 	if (building) return;
@@ -23,6 +24,7 @@ export const init: ServerInit = async () => {
 
 export const handle: Handle = async ({ event, resolve }) => {
 	event.locals.user = await readSession(event.cookies);
+	if (!event.locals.user) await rememberInvite(event.cookies, event.url);
 	const id = event.route.id;
 	if (id && (id.startsWith('/(app)') || id.startsWith('/connect/')))
 		requireUser(event.locals, event.url.pathname);

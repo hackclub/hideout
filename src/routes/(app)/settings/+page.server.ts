@@ -2,6 +2,8 @@ import { eq } from 'drizzle-orm';
 import { db, schema } from '#lib/server/db/index.js';
 import { config } from '#lib/server/config.js';
 import { attempt } from '#lib/server/actions.js';
+import { inviteCounts } from '#lib/server/invites.js';
+import { inviteUrl } from '#lib/game/invites.js';
 import * as kairos from '#lib/server/services/kairos.js';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -15,7 +17,8 @@ export const load: PageServerLoad = async ({ locals }) => {
 		slack: Boolean(u.slackId),
 		address: u.address,
 		birthday: u.birthday,
-		hcaUrl: config.hca.issuer
+		hcaUrl: config.hca.issuer,
+		invite: { url: inviteUrl(config.appUrl, u.inviteCode), ...(await inviteCounts(u.id)) }
 	};
 };
 

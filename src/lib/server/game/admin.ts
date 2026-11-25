@@ -16,6 +16,7 @@ import { alias } from 'drizzle-orm/pg-core';
 import { db, schema } from '../db/index.js';
 import { logAudit } from '../audit.js';
 import { notify } from '../notify.js';
+import { inviteCounts } from '../invites.js';
 import { DEFAULT_SEASON_CONFIG, type SeasonConfig } from '../db/schema.js';
 import { counts as bugCounts } from '../../game/score.js';
 import { balance, lockUser, seasonConfig, viewRound, type RoundView } from './season.js';
@@ -891,7 +892,12 @@ export async function findUsers(q: string) {
 
 export async function userDetail(id: number) {
 	const [user] = await db
-		.select({ ...userFields, address: schema.users.address, hcaId: schema.users.hcaId })
+		.select({
+			...userFields,
+			address: schema.users.address,
+			hcaId: schema.users.hcaId,
+			invitedBy: schema.users.invitedBy
+		})
 		.from(schema.users)
 		.where(eq(schema.users.id, id));
 	if (!user) return null;
@@ -936,7 +942,55 @@ export async function userDetail(id: number) {
 		})
 		.from(schema.bugs)
 		.where(eq(schema.bugs.raccoonId, id));
-	return { user, balance: await balance(id), ledger, ships, orders, fixes };
+	const [inviter] = user.invitedBy
+		? await db
+				.select({ id: schema.users.id, name: schema.users.name })
+				.from(schema.users)
+				.where(eq(schema.users.id, user.invitedBy))
+		: [];
+	return {
+		user,
+		balance: await balance(id),
+		ledger,
+		ships,
+		orders,
+		fixes,
+		inviter: inviter ?? null,
+		invites: await inviteCounts(id),
+		canSetInviter: !user.invitedBy && !ships.some((s) => s.status === 'approved')
+	};
+}
+
+export async function setInviter(admin: SessionUser, userId: number, inviterId: number) {
+	if (!Number.isInteger(inviterId) || inviterId <= 0) throw new GameError('Enter a user id.');
+	if (inviterId === userId) throw new GameError("They can't invite themselves.");
+	await db.transaction(async (tx) => {
+		await lockUser(tx, userId);
+		const [u] = await tx
+			.select({ invitedBy: schema.users.invitedBy })
+			.from(schema.users)
+			.where(eq(schema.users.id, userId));
+		if (!u) throw new GameError('User not found.');
+		if (u.invitedBy) throw new GameError('They already have an inviter.');
+		const [approved] = await tx
+			.select({ id: schema.ships.id })
+			.from(schema.ships)
+			.where(and(eq(schema.ships.userId, userId), eq(schema.ships.status, 'approved')))
+			.limit(1);
+		if (approved)
+			throw new GameError('They already have an approved ship, so the inviter is locked.');
+		const [inviter] = await tx
+			.select({ banned: schema.users.banned })
+			.from(schema.users)
+			.where(eq(schema.users.id, inviterId));
+		if (!inviter) throw new GameError(`No user #${inviterId}.`);
+		if (inviter.banned) throw new GameError('That user is banned.');
+		await tx
+			.update(schema.users)
+			.set({ invitedBy: inviterId })
+			.where(and(eq(schema.users.id, userId), isNull(schema.users.invitedBy)));
+		await logAudit(admin.id, 'user.inviter', { type: 'user', id: userId }, { inviterId }, tx);
+	});
 }
 
 export async function setRole(admin: SessionUser, userId: number, role: string) {

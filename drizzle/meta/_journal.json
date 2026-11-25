@@ -43,6 +43,13 @@
       "when": 1795520197954,
       "tag": "0005_shop_logos",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1795631070999,
+      "tag": "0006_invites",
+      "breakpoints": true
     }
   ]
 }
