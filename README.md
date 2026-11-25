@@ -11,7 +11,7 @@ You need Node 22, Docker (for Postgres) and these credentials:
 - Hack Club Auth: an OAuth app with the callback `APP_URL/auth/callback`
 - Hackatime: an OAuth app with the callback `APP_URL/connect/hackatime/callback`
 - GitHub: a token for API reads and an OAuth app with the callback `APP_URL/connect/github/callback`
-- Slack: a bot token with `chat:write`
+- Slack: a bot token with `chat:write` and `channels:write.invites`. New signups are added to the channels in `SLACK_SIGNUP_CHANNELS` (comma separated IDs), and the bot has to be in those channels
 - Airtable: a token, a base and its `YSWS Project Submission` table for Unified, with a single-line-text field `hideout_ship_id`
 - An S3 compatible bucket (R2 works) for project screenshots
 

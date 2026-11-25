@@ -38,7 +38,10 @@ export const config = {
 		clientId: process.env.GITHUB_CLIENT_ID ?? '',
 		clientSecret: process.env.GITHUB_CLIENT_SECRET ?? ''
 	},
-	slack: { botToken: process.env.SLACK_BOT_TOKEN ?? '' },
+	slack: {
+		botToken: process.env.SLACK_BOT_TOKEN ?? '',
+		signupChannels: list('SLACK_SIGNUP_CHANNELS')
+	},
 	unified: {
 		token: process.env.UNIFIED_AIRTABLE_TOKEN ?? '',
 		baseId: process.env.UNIFIED_BASE_ID ?? '',

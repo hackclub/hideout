@@ -2,6 +2,7 @@ import { eq } from 'drizzle-orm';
 import { db, schema } from './db/index.js';
 import { config } from './config.js';
 import { inviterByCode, notifyJoined } from './invites.js';
+import { joinChannels } from './services/slack.js';
 import type { Address } from './db/schema.js';
 
 export type Profile = {
@@ -60,6 +61,7 @@ export async function upsertUser(p: Profile, inviteCode?: string) {
 			lastSeenAt: new Date()
 		})
 		.returning();
+	if (u.slackId) joinChannels(u.slackId).catch((e) => console.error('[slack] invite failed', e));
 	if (inviter) await notifyJoined(inviter.id, u.id);
 	return u;
 }
